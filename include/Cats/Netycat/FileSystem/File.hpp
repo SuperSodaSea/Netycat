@@ -36,15 +36,15 @@
 
 namespace Cats {
 namespace Netycat {
-namespace FileSystem {
+inline namespace FileSystem {
 
-class File : public Corecat::Data::DataView::DataView<Corecat::Util::Byte> {
+class File : public Corecat::DataView<Corecat::Byte> {
     
 private:
     
-    using String8 = Corecat::Text::String8;
-    using Byte = Corecat::Util::Byte;
-    using Handle = Corecat::Win32::Handle;
+    using String8 = Corecat::String8;
+    using Byte = Corecat::Byte;
+    using Handle = Corecat::Handle;
     
 public:
     

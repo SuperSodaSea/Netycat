@@ -31,8 +31,8 @@
 
 #include "Cats/Netycat/FileSystem.hpp"
 
-using namespace Cats::Corecat::Util;
-using namespace Cats::Netycat::FileSystem;
+using namespace Cats::Corecat;
+using namespace Cats::Netycat;
 
 int main(int argc, char** argv) {
     

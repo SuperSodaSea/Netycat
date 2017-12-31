@@ -31,7 +31,7 @@
 
 namespace Cats {
 namespace Netycat {
-namespace FileSystem {
+inline namespace FileSystem {
 
 File::File(String8 path, Mode mode) {
     

@@ -29,7 +29,7 @@
 
 namespace Cats {
 namespace Netycat {
-namespace FileSystem {
+inline namespace FileSystem {
 
 MappedFile::MappedFile(File& file, std::uint64_t offset, std::size_t size_, Mode mode) : size(size_) {
     

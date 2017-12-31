@@ -39,14 +39,14 @@
 
 namespace Cats {
 namespace Netycat {
-namespace FileSystem {
+inline namespace FileSystem {
 
-class MappedFile : public Corecat::Data::DataView::DataView<Corecat::Util::Byte> {
+class MappedFile : public Corecat::DataView<Corecat::Byte> {
     
 private:
     
-    using Byte = Corecat::Util::Byte;
-    using Handle = Corecat::Win32::Handle;
+    using Byte = Corecat::Byte;
+    using Handle = Corecat::Handle;
     
 public:
     
