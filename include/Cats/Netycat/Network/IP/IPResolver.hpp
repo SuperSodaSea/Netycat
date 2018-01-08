@@ -24,11 +24,54 @@
  *
  */
 
-#ifndef CATS_NETYCAT_NETWORK_HPP
-#define CATS_NETYCAT_NETWORK_HPP
+#ifndef CATS_NETYCAT_NETWORK_IP_IPRESOLVER_HPP
+#define CATS_NETYCAT_NETWORK_IP_IPRESOLVER_HPP
 
 
-#include "Network/IP.hpp"
+#include <vector>
+
+#include "IPAddress.hpp"
+
+
+namespace Cats {
+namespace Netycat {
+inline namespace Network {
+inline namespace IP {
+
+class IPResolver {
+    
+protected:
+    
+    using String8 = Corecat::String8;
+    
+public:
+    
+    virtual ~IPResolver();
+    
+    virtual std::vector<IPAddress> resolve(const String8& name) = 0;
+    
+};
+
+class SystemIPResolver : public IPResolver {
+    
+public:
+    
+    SystemIPResolver();
+    SystemIPResolver(const SystemIPResolver& src) = delete;
+    SystemIPResolver(SystemIPResolver&& src) = default;
+    ~SystemIPResolver() override;
+    
+    SystemIPResolver& operator =(const SystemIPResolver& src) = delete;
+    SystemIPResolver& operator =(SystemIPResolver&& src) = default;
+    
+    std::vector<IPAddress> resolve(const String8& name) override;
+    
+};
+
+}
+}
+}
+}
 
 
 #endif

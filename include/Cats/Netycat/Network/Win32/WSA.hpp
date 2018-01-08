@@ -24,40 +24,25 @@
  *
  */
 
-#include <exception>
-#include <iostream>
+#ifndef CATS_NETYCAT_NETWORK_WIN32_WSA_HPP
+#define CATS_NETYCAT_NETWORK_WIN32_WSA_HPP
 
-#include "Cats/Corecat/Data/Stream.hpp"
-#include "Cats/Netycat/FileSystem.hpp"
 
-using namespace Cats::Corecat;
-using namespace Cats::Netycat;
+#include <winsock2.h>
+#include <ws2tcpip.h>
 
-int main(int argc, char** argv) {
-    
-    if(argc < 3) {
-        
-        std::cerr << "error: file name needed" << std::endl;
-        return 1;
-        
-    }
-    try {
-        
-        File file1(argv[1], File::Mode::READ);
-        auto is = createDataViewInputStream(file1);
-        File file2(argv[2], File::Mode::WRITE | File::Mode::CREATE);
-        auto os = createDataViewOutputStream(file2);
-        Byte data[256];
-        while(std::size_t size = is.readSome(data, sizeof(data))) {
-            
-            std::cout << size << std::endl;
-            std::cout.write(reinterpret_cast<char*>(data), size) << std::endl;
-            os.writeAll(data, size);
-            
-        }
-        
-    } catch(std::exception& e) { std::cout << e.what() << std::endl; }
-    
-    return 0;
-    
+
+namespace Cats {
+namespace Netycat {
+inline namespace Network {
+inline namespace Win32 {
+
+void initWSA();
+
 }
+}
+}
+}
+
+
+#endif

@@ -24,11 +24,12 @@
  *
  */
 
-#ifndef CATS_NETYCAT_NETWORK_HPP
-#define CATS_NETYCAT_NETWORK_HPP
+#ifndef CATS_NETYCAT_NETWORK_IP_HPP
+#define CATS_NETYCAT_NETWORK_IP_HPP
 
 
-#include "Network/IP.hpp"
+#include "IP/IPAddress.hpp"
+#include "IP/IPResolver.hpp"
 
 
 #endif

@@ -24,11 +24,42 @@
  *
  */
 
-#ifndef CATS_NETYCAT_NETWORK_HPP
-#define CATS_NETYCAT_NETWORK_HPP
+#include <cstring>
+
+#include <exception>
+#include <iostream>
+
+#include "Cats/Netycat/FileSystem.hpp"
 
 
-#include "Network/IP.hpp"
+using namespace Cats::Corecat;
+using namespace Cats::Netycat;
 
 
-#endif
+int main(int argc, char** argv) {
+    
+    if(argc < 3) {
+        
+        std::cerr << "error: file name needed" << std::endl;
+        return 1;
+        
+    }
+    try {
+        
+        File file1(argv[1], File::Mode::READ);
+        std::size_t size = std::size_t(file1.getSize());
+        MappedFile mappedFile1(file1, 0, size, MappedFile::Mode::READ);
+        auto data1 = mappedFile1.getData();
+        
+        File file2(argv[2], File::Mode::READ_WRITE | File::Mode::CREATE);
+        file2.setSize(size);
+        MappedFile mappedFile2(file2, 0, size, MappedFile::Mode::READ_WRITE);
+        auto data2 = mappedFile2.getData();
+        
+        std::memcpy(data2, data1, size);
+        
+    } catch(std::exception& e) { std::cerr << e.what() << std::endl; }
+    
+    return 0;
+    
+}

@@ -24,12 +24,12 @@
  *
  */
 
-#ifndef CATS_NETYCAT_NETWORK_IPADDRESS_HPP
-#define CATS_NETYCAT_NETWORK_IPADDRESS_HPP
+#ifndef CATS_NETYCAT_NETWORK_IP_IPADDRESS_HPP
+#define CATS_NETYCAT_NETWORK_IP_IPADDRESS_HPP
 
 
 #include <cstdint>
-#include <cstdlib>
+#include <cstring>
 
 #include <stdexcept>
 
@@ -39,6 +39,7 @@
 namespace Cats {
 namespace Netycat {
 inline namespace Network {
+inline namespace IP {
 
 class IPv4Address {
     
@@ -193,6 +194,7 @@ public:
     
 };
 
+}
 }
 }
 }

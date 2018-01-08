@@ -24,11 +24,43 @@
  *
  */
 
-#ifndef CATS_NETYCAT_NETWORK_HPP
-#define CATS_NETYCAT_NETWORK_HPP
+#include "Cats/Netycat/Network/Win32/WSA.hpp"
 
 
-#include "Network/IP.hpp"
+namespace Cats {
+namespace Netycat {
+inline namespace Network {
+inline namespace Win32 {
 
+namespace Impl {
 
-#endif
+class WSA {
+    
+private:
+    
+    WSADATA wsaData;
+    
+public:
+    
+    WSA() { WSAStartup(MAKEWORD(2, 2), &wsaData); }
+    WSA(const WSA& src) = delete;
+    ~WSA() { WSACleanup(); }
+    
+    WSA& operator =(const WSA& src) = delete;
+    
+    const WSADATA& getWSAData() { return wsaData; }
+    
+};
+
+}
+
+void initWSA() {
+    
+    static Impl::WSA wsa;
+    
+}
+
+}
+}
+}
+}

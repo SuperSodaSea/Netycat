@@ -24,11 +24,37 @@
  *
  */
 
-#ifndef CATS_NETYCAT_NETWORK_HPP
-#define CATS_NETYCAT_NETWORK_HPP
+#include <exception>
+#include <iostream>
+
+#include "Cats/Netycat/Network/IP.hpp"
 
 
-#include "Network/IP.hpp"
+using namespace Cats::Corecat;
+using namespace Cats::Netycat;
 
 
-#endif
+int main(int argc, char** argv) {
+    
+    if(argc < 2) {
+        
+        std::cerr << "error: host name needed" << std::endl;
+        return 1;
+        
+    }
+    try {
+        
+        for(int i = 1; i < argc; ++i) {
+            
+            SystemIPResolver resolver;
+            auto addressList = resolver.resolve(argv[i]);
+            std::cout << argv[i] << ":" << std::endl;
+            for(auto&& x : addressList) std::cout << "    " << x.toString() << std::endl;
+            
+        }
+        
+    } catch(std::exception& e) { std::cerr << e.what() << std::endl; }
+    
+    return 0;
+    
+}
