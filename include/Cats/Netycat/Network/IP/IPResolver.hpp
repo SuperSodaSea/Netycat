@@ -38,33 +38,22 @@ namespace Netycat {
 inline namespace Network {
 inline namespace IP {
 
-class IPResolver {
+class SystemIPResolver {
     
-protected:
+private:
     
     using String8 = Corecat::String8;
-    
-public:
-    
-    virtual ~IPResolver();
-    
-    virtual std::vector<IPAddress> resolve(const String8& name) = 0;
-    
-};
-
-class SystemIPResolver : public IPResolver {
     
 public:
     
     SystemIPResolver();
     SystemIPResolver(const SystemIPResolver& src) = delete;
     SystemIPResolver(SystemIPResolver&& src) = default;
-    ~SystemIPResolver() override;
     
     SystemIPResolver& operator =(const SystemIPResolver& src) = delete;
     SystemIPResolver& operator =(SystemIPResolver&& src) = default;
     
-    std::vector<IPAddress> resolve(const String8& name) override;
+    std::vector<IPAddress> resolve(const String8& name);
     
 };
 

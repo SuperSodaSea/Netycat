@@ -26,6 +26,8 @@
 
 #include "Cats/Netycat/Network/IP/IPResolver.hpp"
 
+#include <cstddef>
+
 #include "Cats/Netycat/Network/Win32/WSA.hpp"
 
 
@@ -34,11 +36,7 @@ namespace Netycat {
 inline namespace Network {
 inline namespace IP {
 
-IPResolver::~IPResolver() {}
-
-
 SystemIPResolver::SystemIPResolver() { initWSA(); }
-SystemIPResolver::~SystemIPResolver() {}
 
 std::vector<IPAddress> SystemIPResolver::resolve(const String8& name) {
     
@@ -50,7 +48,10 @@ std::vector<IPAddress> SystemIPResolver::resolve(const String8& name) {
     int errcode;
     if((errcode = ::getaddrinfo(name.getData(), nullptr, &hints, &result)))
         throw std::runtime_error("::getaddrinfo failed");
+    std::size_t count = 0;
+    for(addrinfo* cur = result; cur != nullptr; cur = cur->ai_next) ++count;
     std::vector<IPAddress> addressList;
+    addressList.reserve(count);
     for(addrinfo* cur = result; cur != nullptr; cur = cur->ai_next) {
         
         switch(cur->ai_family) {
