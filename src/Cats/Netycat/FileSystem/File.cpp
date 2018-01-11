@@ -26,7 +26,7 @@
 
 #include "Cats/Netycat/FileSystem/File.hpp"
 
-#include <stdexcept>
+#include "Cats/Corecat/Util/Exception.hpp"
 
 
 namespace Cats {
@@ -40,7 +40,7 @@ File::File(String8 path, Mode mode) {
     case Mode::READ: access = GENERIC_READ, readable = true; break;
     case Mode::WRITE: access = GENERIC_WRITE, writable = true; break;
     case Mode::READ_WRITE: access = GENERIC_READ | GENERIC_WRITE, readable = true, writable = true; break;
-    default: throw std::invalid_argument("Invalid mode");
+    default: throw Corecat::InvalidArgumentException("Invalid mode");
     }
     
     DWORD share = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
@@ -55,15 +55,14 @@ File::File(String8 path, Mode mode) {
     case Mode::CREATE_TRUNCATE: disposition = CREATE_ALWAYS; break;
     case Mode::CREATE_EXCLUDE:
     case Mode::CREATE_TRUNCATE_EXCLUDE: disposition = CREATE_NEW; break;
-    default: throw std::invalid_argument("Invalid mode");
+    default: throw Corecat::InvalidArgumentException("Invalid mode");
     }
     
     DWORD attribute = FILE_ATTRIBUTE_NORMAL;
     
     if(!(handle = CreateFileA(path.getData(), access, share, nullptr, disposition, attribute, nullptr))) {
         
-        std::cout << GetLastError() << std::endl;
-        throw std::runtime_error("CreateFileA failed");
+        throw Corecat::IOException("CreateFileA failed");
         
     }
     
@@ -73,7 +72,7 @@ void File::read(Byte* buffer, std::size_t count, std::uint64_t offset) {
     assert(handle);
     
     if(offset + count > getSize())
-        throw std::invalid_argument("End of file");
+        throw Corecat::IOException("End of file");
     
     OVERLAPPED overlapped = {};
     overlapped.Offset = static_cast<DWORD>(offset);
@@ -81,8 +80,7 @@ void File::read(Byte* buffer, std::size_t count, std::uint64_t offset) {
     DWORD byteCount;
     if(!ReadFile(handle, buffer, count, &byteCount, &overlapped)) {
         
-        std::cout << GetLastError() << std::endl;
-        throw std::runtime_error("ReadFile failed");
+        throw Corecat::IOException("ReadFile failed");
         
     }
     
@@ -97,8 +95,7 @@ void File::write(const Byte* buffer, std::size_t count, std::uint64_t offset) {
     DWORD byteCount;
     if(!WriteFile(handle, buffer, count, &byteCount, &overlapped)) {
         
-        std::cout << GetLastError() << std::endl;
-        throw std::runtime_error("WriteFile failed");
+        throw Corecat::IOException("WriteFile failed");
         
     }
     
@@ -107,8 +104,7 @@ void File::flush() {
     
     if(!FlushFileBuffers(handle)) {
         
-        std::cout << GetLastError() << std::endl;
-        throw std::runtime_error("FlushFileBuffers failed");
+        throw Corecat::IOException("FlushFileBuffers failed");
         
     }
     
@@ -120,8 +116,7 @@ std::uint64_t File::getSize() {
     LARGE_INTEGER s;
     if(!GetFileSizeEx(handle, &s)) {
         
-        std::cout << GetLastError() << std::endl;
-        throw std::runtime_error("GetFileSizeEx failed");
+        throw Corecat::IOException("GetFileSizeEx failed");
         
     }
     return s.QuadPart;
@@ -135,14 +130,12 @@ void File::setSize(std::uint64_t size) {
     s.QuadPart = size;
     if(!SetFilePointerEx(handle, s, nullptr, FILE_BEGIN)) {
         
-        std::cout << GetLastError() << std::endl;
-        throw std::runtime_error("SetFilePointerEx failed");
+        throw Corecat::IOException("SetFilePointerEx failed");
         
     }
     if(!SetEndOfFile(handle)) {
         
-        std::cout << GetLastError() << std::endl;
-        throw std::runtime_error("SetEndOfFile failed");
+        throw Corecat::IOException("SetEndOfFile failed");
         
     }
     

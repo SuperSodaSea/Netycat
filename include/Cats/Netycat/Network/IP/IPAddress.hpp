@@ -31,9 +31,8 @@
 #include <cstdint>
 #include <cstring>
 
-#include <stdexcept>
-
 #include "Cats/Corecat/Text/Formatter.hpp"
+#include "Cats/Corecat/Util/Exception.hpp"
 
 
 namespace Cats {
@@ -179,8 +178,8 @@ public:
     
     Type getType() const noexcept { return type; }
     
-    const IPv4Address& getIPv4() const { if(type != Type::IPv4) throw std::invalid_argument("Address is not IPv4"); return v4; }
-    const IPv6Address& getIPv6() const { if(type != Type::IPv6) throw std::invalid_argument("Address is not IPv6"); return v6; }
+    const IPv4Address& getIPv4() const { if(type != Type::IPv4) throw Corecat::InvalidArgumentException("Address is not IPv4"); return v4; }
+    const IPv6Address& getIPv6() const { if(type != Type::IPv6) throw Corecat::InvalidArgumentException("Address is not IPv6"); return v6; }
     
     String8 toString() const {
         

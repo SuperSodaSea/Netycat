@@ -30,11 +30,10 @@
 
 #include "Cats/Corecat/Data/DataView/DataView.hpp"
 #include "Cats/Corecat/Util/Byte.hpp"
+#include "Cats/Corecat/Util/Exception.hpp"
 #include "Cats/Corecat/Win32/Handle.hpp"
 
 #include "File.hpp"
-
-#include <stdexcept>
 
 
 namespace Cats {
@@ -85,7 +84,7 @@ public:
     void write(const Byte* buffer, std::size_t count, std::uint64_t offset) override;
     void flush();
     std::uint64_t getSize() override { return size; }
-    void setSize(std::uint64_t /*size*/) override { throw std::runtime_error("DataView is not resizable"); }
+    void setSize(std::uint64_t /*size*/) override { throw Corecat::InvalidArgumentException("DataView is not resizable"); }
     
 };
 
