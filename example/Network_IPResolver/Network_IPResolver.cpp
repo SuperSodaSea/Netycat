@@ -36,24 +36,24 @@ using namespace Cats::Netycat;
 
 int main(int argc, char** argv) {
     
-    if(argc < 2) {
-        
-        std::cerr << "error: host name needed" << std::endl;
-        return 1;
-        
-    }
     try {
         
+        if(argc < 2) throw InvalidArgumentException("Host name needed");
+        SystemIPResolver resolver;
         for(int i = 1; i < argc; ++i) {
             
-            SystemIPResolver resolver;
-            auto addressList = resolver.resolve(argv[i]);
             std::cout << argv[i] << ":" << std::endl;
+            auto addressList = resolver.resolve(argv[i]);
             for(auto&& x : addressList) std::cout << "    " << x.toString() << std::endl;
             
         }
         
-    } catch(std::exception& e) { std::cerr << e.what() << std::endl; }
+    } catch(std::exception& e) {
+        
+        std::cerr << e.what() << std::endl;
+        return 1;
+        
+    }
     
     return 0;
     

@@ -33,6 +33,7 @@
 
 #include "Cats/Corecat/Text/Formatter.hpp"
 #include "Cats/Corecat/Util/Exception.hpp"
+#include "Cats/Corecat/Util/Operator.hpp"
 
 
 namespace Cats {
@@ -40,7 +41,7 @@ namespace Netycat {
 inline namespace Network {
 inline namespace IP {
 
-class IPv4Address {
+class IPv4Address : public Corecat::EqualityOperator<IPv4Address>, public Corecat::RelationalOperator<IPv4Address> {
     
 private:
     
@@ -58,9 +59,12 @@ public:
     IPv4Address(std::uint32_t data_) noexcept :
         data{static_cast<std::uint8_t>(data_ >> 24), static_cast<std::uint8_t>(data_ >> 16),
             static_cast<std::uint8_t>(data_ >> 8), static_cast<std::uint8_t>(data_)} {}
-    IPv4Address(const IPv4Address& src) noexcept = default;
+    IPv4Address(const IPv4Address& src) = default;
     
-    IPv4Address& operator =(const IPv4Address& src) noexcept = default;
+    IPv4Address& operator =(const IPv4Address& src) = default;
+    
+    friend bool operator ==(const IPv4Address& a, const IPv4Address& b) noexcept { return !std::memcmp(a.data, b.data, 4); }
+    friend bool operator <(const IPv4Address& a, const IPv4Address& b) noexcept { return std::memcmp(a.data, b.data, 4) < 0; }
     
     operator std::uint32_t() const { return data[0] << 24 | (data[1] << 16) | (data[2] << 8) | data[3]; }
     
@@ -83,7 +87,7 @@ public:
     
 };
 
-class IPv6Address {
+class IPv6Address : public Corecat::EqualityOperator<IPv6Address>, public Corecat::RelationalOperator<IPv6Address> {
     
 private:
     
@@ -105,9 +109,17 @@ public:
         std::uint8_t d8, std::uint8_t d9, std::uint8_t d10, std::uint8_t d11,
         std::uint8_t d12, std::uint8_t d13, std::uint8_t d14, std::uint8_t d15, std::uint32_t scope_ = 0) noexcept :
         data{d0, d1, d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12, d13, d14, d15}, scope(scope_) {}
-    IPv6Address(const IPv6Address& src) noexcept = default;
+    IPv6Address(const IPv6Address& src) = default;
     
-    IPv6Address& operator =(const IPv6Address& src) noexcept = default;
+    IPv6Address& operator =(const IPv6Address& src) = default;
+    
+    friend bool operator ==(const IPv6Address& a, const IPv6Address& b) noexcept { return !std::memcmp(a.data, b.data, 16) && a.scope == b.scope; }
+    friend bool operator <(const IPv6Address& a, const IPv6Address& b) noexcept {
+        
+        int x = std::memcmp(a.data, b.data, 16);
+        return x ? x < 0 : a.scope < b.scope;
+        
+    }
     
     const std::uint8_t* getData() const noexcept { return data; }
     std::uint8_t* getData() noexcept { return data; }
@@ -144,7 +156,7 @@ public:
     
 };
 
-class IPAddress {
+class IPAddress : public Corecat::EqualityOperator<IPAddress>, public Corecat::RelationalOperator<IPAddress> {
     
 private:
     
@@ -152,7 +164,7 @@ private:
     
 public:
     
-    enum class Type {None, IPv4, IPv6};
+    enum class Type {IPv4, IPv6};
     
 private:
     
@@ -166,17 +178,40 @@ private:
     
 public:
     
-    IPAddress() noexcept : type(Type::None) {}
+    IPAddress() = default;
     IPAddress(const IPv4Address& src) noexcept : type(Type::IPv4), v4(src) {}
     IPAddress(const IPv6Address& src) noexcept : type(Type::IPv6), v6(src) {}
-    IPAddress(const IPAddress& src) noexcept = default;
-    ~IPAddress() noexcept = default;
+    IPAddress(const IPAddress& src) = default;
     
     IPAddress& operator =(const IPv4Address& src) noexcept { type = Type::IPv4, v4 = src; return *this; }
     IPAddress& operator =(const IPv6Address& src) noexcept { type = Type::IPv6, v6 = src; return *this; }
-    IPAddress& operator =(const IPAddress& src) noexcept = default;
+    IPAddress& operator =(const IPAddress& src) = default;
+    
+    friend bool operator ==(const IPAddress& a, const IPAddress& b) noexcept {
+        
+        if(a.type != b.type) return false;
+        switch(a.type) {
+        case Type::IPv4: return a.v4 == b.v4;
+        case Type::IPv6: return a.v6 == b.v6;
+        default: return false;
+        }
+        
+    }
+    friend bool operator <(const IPAddress& a, const IPAddress& b) noexcept {
+        
+        if(a.type != b.type) return a.type < b.type;
+        switch(a.type) {
+        case Type::IPv4: return a.v4 < b.v4;
+        case Type::IPv6: return a.v6 < b.v6;
+        default: return false;
+        }
+        
+    }
     
     Type getType() const noexcept { return type; }
+    
+    bool isIPv4() const noexcept { return type == Type::IPv4; }
+    bool isIPv6() const noexcept { return type == Type::IPv6; }
     
     const IPv4Address& getIPv4() const { if(type != Type::IPv4) throw Corecat::InvalidArgumentException("Address is not IPv4"); return v4; }
     const IPv6Address& getIPv6() const { if(type != Type::IPv6) throw Corecat::InvalidArgumentException("Address is not IPv6"); return v6; }
