@@ -43,8 +43,12 @@ int main(int argc, char** argv) {
         for(int i = 1; i < argc; ++i) {
             
             std::cout << argv[i] << ":" << std::endl;
-            auto addressList = resolver.resolve(argv[i]);
-            for(auto&& x : addressList) std::cout << "    " << x.toString() << std::endl;
+            try {
+                
+                auto addressList = resolver.resolve(argv[i]);
+                for(auto&& x : addressList) std::cout << "    " << x.toString() << std::endl;
+                
+            } catch(std::exception& e) { std::cout << "    " << e.what() << std::endl; }
             
         }
         
