@@ -24,14 +24,14 @@
  *
  */
 
-#include "Cats/Netycat/FileSystem/File.hpp"
+#include "Cats/Netycat/Filesystem/File.hpp"
 
 #include "Cats/Corecat/Util/Exception.hpp"
 
 
 namespace Cats {
 namespace Netycat {
-inline namespace FileSystem {
+inline namespace Filesystem {
 
 File::File(String8 path, Mode mode) {
     

@@ -24,25 +24,26 @@
  *
  */
 
-#ifndef CATS_NETYCAT_FILESYSTEM_FILE_HPP
-#define CATS_NETYCAT_FILESYSTEM_FILE_HPP
+#ifndef CATS_NETYCAT_FILESYSTEM_MAPPEDFILE_HPP
+#define CATS_NETYCAT_FILESYSTEM_MAPPEDFILE_HPP
 
 
 #include "Cats/Corecat/Data/DataView/DataView.hpp"
-#include "Cats/Corecat/Text/String.hpp"
 #include "Cats/Corecat/Util/Byte.hpp"
+#include "Cats/Corecat/Util/Exception.hpp"
 #include "Cats/Corecat/Win32/Handle.hpp"
+
+#include "File.hpp"
 
 
 namespace Cats {
 namespace Netycat {
-inline namespace FileSystem {
+inline namespace Filesystem {
 
-class File : public Corecat::DataView<Corecat::Byte> {
+class MappedFile : public Corecat::DataView<Corecat::Byte> {
     
 private:
     
-    using String8 = Corecat::String8;
     using Byte = Corecat::Byte;
     using Handle = Corecat::Handle;
     
@@ -50,50 +51,40 @@ public:
     
     enum class Mode : std::uint32_t {
         
-        NONE = 0x00000000,
-        
-        READ = 0x00000001,
-        WRITE = 0x00000002,
-        READ_WRITE = READ | WRITE,
-        
-        CREATE = 0x00000004,
-        TRUNCATE = 0x0000008,
-        EXCLUDE = 0x00000010,
-        CREATE_TRUNCATE = CREATE | TRUNCATE,
-        CREATE_EXCLUDE = CREATE | EXCLUDE,
-        TRUNCATE_EXCLUDE = TRUNCATE | EXCLUDE,
-        CREATE_TRUNCATE_EXCLUDE = CREATE | TRUNCATE | EXCLUDE,
+        READ,
+        READ_WRITE,
+        READ_WRITE_COPY,
         
     };
-    friend constexpr Mode operator &(Mode a, Mode b) { return static_cast<Mode>(static_cast<std::uint32_t>(a) & static_cast<std::uint32_t>(b)); }
-    friend constexpr Mode operator |(Mode a, Mode b) { return static_cast<Mode>(static_cast<std::uint32_t>(a) | static_cast<std::uint32_t>(b)); }
     
 private:
     
     Handle handle;
-    bool readable = false;
-    bool writable = false;
+    std::size_t size;
+    Byte* data = nullptr;
+    bool writable;
     
 public:
     
-    File(String8 path, Mode mode);
-    File(const File& src) = delete;
-    File(File&& src) = default;
-    ~File() override = default;
+    MappedFile(File& file, std::uint64_t offset, std::size_t size_, Mode mode);
+    MappedFile(const MappedFile& src) = delete;
+    MappedFile(MappedFile&& src) : handle(std::move(src.handle)), size(src.size), data(src.data) { src.data = nullptr; }
+    ~MappedFile() override;
     
-    File& operator =(const File& src) = delete;
-    File& operator =(File&& src) = default;
+    MappedFile& operator =(const MappedFile& src) = delete;
+    MappedFile& operator =(MappedFile&& src) { handle = std::move(src.handle), size = src.size, data = src.data, src.data = nullptr; return *this; }
     
-    bool isReadable() override { return readable; }
+    const Byte* getData() const noexcept { return data; }
+    Byte* getData() noexcept { return data; }
+    
+    bool isReadable() override { return true; }
     bool isWritable() override { return writable; }
-    bool isResizable() override { return writable; }
+    bool isResizable() override { return false; }
     void read(Byte* buffer, std::size_t count, std::uint64_t offset) override;
     void write(const Byte* buffer, std::size_t count, std::uint64_t offset) override;
-    void flush() override;
-    std::uint64_t getSize() override;
-    void setSize(std::uint64_t size) override;
-    
-    const Handle& getHandle() const { return handle; }
+    void flush();
+    std::uint64_t getSize() override { return size; }
+    void setSize(std::uint64_t /*size*/) override { throw Corecat::InvalidArgumentException("DataView is not resizable"); }
     
 };
 

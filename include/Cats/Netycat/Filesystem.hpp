@@ -28,8 +28,8 @@
 #define CATS_NETYCAT_FILESYSTEM_HPP
 
 
-#include "FileSystem/File.hpp"
-#include "FileSystem/MappedFile.hpp"
+#include "Filesystem/File.hpp"
+#include "Filesystem/MappedFile.hpp"
 
 
 #endif

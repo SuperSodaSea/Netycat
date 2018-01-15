@@ -24,11 +24,12 @@
  *
  */
 
+#include <cstring>
+
 #include <exception>
 #include <iostream>
 
-#include "Cats/Corecat/Data/Stream.hpp"
-#include "Cats/Netycat/FileSystem.hpp"
+#include "Cats/Netycat/Filesystem.hpp"
 
 
 using namespace Cats::Corecat;
@@ -46,12 +47,16 @@ int main(int argc, char** argv) {
     try {
         
         File file1(argv[1], File::Mode::READ);
-        auto is = createDataViewInputStream(file1);
-        File file2(argv[2], File::Mode::WRITE | File::Mode::CREATE);
-        auto os = createDataViewOutputStream(file2);
-        Byte data[256];
-        while(std::size_t size = is.readSome(data, sizeof(data)))
-            os.writeAll(data, size);
+        std::size_t size = std::size_t(file1.getSize());
+        MappedFile mappedFile1(file1, 0, size, MappedFile::Mode::READ);
+        auto data1 = mappedFile1.getData();
+        
+        File file2(argv[2], File::Mode::READ_WRITE | File::Mode::CREATE);
+        file2.setSize(size);
+        MappedFile mappedFile2(file2, 0, size, MappedFile::Mode::READ_WRITE);
+        auto data2 = mappedFile2.getData();
+        
+        std::memcpy(data2, data1, size);
         
     } catch(std::exception& e) { std::cerr << e.what() << std::endl; }
     

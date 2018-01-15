@@ -17,8 +17,8 @@ endif()
 include_directories("include")
 
 set(SRC
-    src/Cats/Netycat/FileSystem/File.cpp
-    src/Cats/Netycat/FileSystem/MappedFile.cpp
+    src/Cats/Netycat/Filesystem/File.cpp
+    src/Cats/Netycat/Filesystem/MappedFile.cpp
     src/Cats/Netycat/Network/IP/IPResolver.cpp)
 if(CMAKE_SYSTEM_NAME MATCHES "Windows")
     set(SRC
@@ -30,8 +30,8 @@ add_library(Netycat STATIC ${SRC})
 link_libraries(Netycat)
 
 set(EXAMPLE
-    FileSystem_File
-    FileSystem_MappedFile
+    Filesystem_File
+    Filesystem_MappedFile
     Network_IPResolver)
 
 foreach(example ${EXAMPLE})

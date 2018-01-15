@@ -24,12 +24,12 @@
  *
  */
 
-#include "Cats/Netycat/FileSystem/MappedFile.hpp"
+#include "Cats/Netycat/Filesystem/MappedFile.hpp"
 
 
 namespace Cats {
 namespace Netycat {
-inline namespace FileSystem {
+inline namespace Filesystem {
 
 MappedFile::MappedFile(File& file, std::uint64_t offset, std::size_t size_, Mode mode) : size(size_) {
     
