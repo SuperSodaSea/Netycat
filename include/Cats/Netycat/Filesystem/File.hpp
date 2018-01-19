@@ -32,6 +32,7 @@
 #include "Cats/Corecat/Text/String.hpp"
 #include "Cats/Corecat/Util/Byte.hpp"
 #include "Cats/Corecat/Win32/Handle.hpp"
+#include "Cats/Netycat/Filesystem/FilePath.hpp"
 
 
 namespace Cats {
@@ -42,7 +43,6 @@ class File : public Corecat::DataView<Corecat::Byte> {
     
 private:
     
-    using String8 = Corecat::String8;
     using Byte = Corecat::Byte;
     using Handle = Corecat::Handle;
     
@@ -76,7 +76,7 @@ private:
     
 public:
     
-    File(String8 path, Mode mode);
+    File(const FilePath& path, Mode mode);
     File(const File& src) = delete;
     File(File&& src) = default;
     ~File() override = default;

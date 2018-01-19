@@ -33,7 +33,7 @@ namespace Cats {
 namespace Netycat {
 inline namespace Filesystem {
 
-File::File(String8 path, Mode mode) {
+File::File(const FilePath& path, Mode mode) {
     
     DWORD access;
     switch(mode & Mode::READ_WRITE) {
@@ -60,9 +60,9 @@ File::File(String8 path, Mode mode) {
     
     DWORD attribute = FILE_ATTRIBUTE_NORMAL;
     
-    if(!(handle = CreateFileA(path.getData(), access, share, nullptr, disposition, attribute, nullptr))) {
+    if(!(handle = CreateFileW(reinterpret_cast<const WCHAR*>(path.getData().getData()), access, share, nullptr, disposition, attribute, nullptr))) {
         
-        throw Corecat::IOException("CreateFileA failed");
+        throw Corecat::IOException("CreateFileW failed");
         
     }
     

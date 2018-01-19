@@ -29,6 +29,7 @@
 
 
 #include "Filesystem/File.hpp"
+#include "Filesystem/FilePath.hpp"
 #include "Filesystem/MappedFile.hpp"
 
 
