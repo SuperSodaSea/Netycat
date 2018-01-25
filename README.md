@@ -15,7 +15,7 @@ Travis CI | [![Travis CI](https://travis-ci.org/SuperSodaSea/Netycat.svg?branch=
 
 ## Requirement
 
-+ C++11
++ C++14
 + [Corecat][Corecat]
 
 
