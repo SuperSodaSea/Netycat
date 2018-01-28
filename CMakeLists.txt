@@ -17,6 +17,7 @@ endif()
 include_directories("include")
 
 set(SRC
+    src/Cats/Netycat/Filesystem/Directory.cpp
     src/Cats/Netycat/Filesystem/File.cpp
     src/Cats/Netycat/Filesystem/MappedFile.cpp
     src/Cats/Netycat/Network/IP/IPResolver.cpp)
@@ -30,6 +31,7 @@ add_library(Netycat STATIC ${SRC})
 link_libraries(Netycat)
 
 set(EXAMPLE
+    Filesystem_Directory
     Filesystem_File
     Filesystem_MappedFile
     Network_IPResolver)

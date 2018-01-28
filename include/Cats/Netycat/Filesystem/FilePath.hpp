@@ -44,12 +44,12 @@ private:
     template <typename C>
     using String = Corecat::String<C>;
     using UTF8Charset = Corecat::UTF8Charset<>;
-    using UTF16Charset = Corecat::UTF16Charset<>;
+    using WideCharset = Corecat::WideCharset<>;
     
 public:
     
 #if defined(CATS_CORECAT_SYSTEM_OS_WINDOWS)
-    using CharsetType = UTF16Charset;
+    using CharsetType = WideCharset;
 #elif defined(CATS_CORECAT_SYSTEM_OS_LINUX) || defined(CATS_CORECAT_SYSTEM_OS_MACOS)
     using CharsetType = UTF8Charset;
 #else
@@ -57,6 +57,7 @@ public:
 #endif
     
     using StringType = String<CharsetType>;
+    using StringViewType = StringType::StringViewType;
     
 private:
     
@@ -76,6 +77,7 @@ public:
     friend bool operator <(const FilePath& a, const FilePath& b) noexcept { return a.data < b.data; }
     
     operator StringType() const { return data; }
+    operator StringViewType() const { return data; }
     
     const StringType& getData() const noexcept { return data; }
     

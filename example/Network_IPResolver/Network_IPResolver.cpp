@@ -24,9 +24,9 @@
  *
  */
 
-#include <exception>
 #include <iostream>
 
+#include "Cats/Corecat/Util.hpp"
 #include "Cats/Netycat/Network/IP.hpp"
 
 
@@ -39,6 +39,7 @@ int main(int argc, char** argv) {
     try {
         
         if(argc < 2) throw InvalidArgumentException("Host name needed");
+        
         SystemIPResolver resolver;
         for(int i = 1; i < argc; ++i) {
             
@@ -52,12 +53,7 @@ int main(int argc, char** argv) {
             
         }
         
-    } catch(std::exception& e) {
-        
-        std::cerr << e.what() << std::endl;
-        return 1;
-        
-    }
+    } catch(std::exception& e) { std::cerr << e.what() << std::endl; return 1; }
     
     return 0;
     

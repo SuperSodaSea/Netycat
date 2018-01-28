@@ -27,8 +27,9 @@ build:
   verbosity: minimal
 
 test_script:
-- build\%CONFIGURATION%\FileSystem_File.exe data\test1.txt test1.txt
+- build\%CONFIGURATION%\Filesystem_Directory.exe include\Cats\Netycat\Filesystem
+- build\%CONFIGURATION%\Filesystem_File.exe data\test1.txt test1.txt
 - cat test1.txt
-- build\%CONFIGURATION%\FileSystem_MappedFile.exe data\test1.txt test1.txt
+- build\%CONFIGURATION%\Filesystem_MappedFile.exe data\test1.txt test1.txt
 - cat test1.txt
 - build\%CONFIGURATION%\Network_IPResolver.exe github.com

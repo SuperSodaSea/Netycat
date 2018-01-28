@@ -24,10 +24,10 @@
  *
  */
 
-#include <exception>
 #include <iostream>
 
 #include "Cats/Corecat/Data/Stream.hpp"
+#include "Cats/Corecat/Util.hpp"
 #include "Cats/Netycat/Filesystem.hpp"
 
 
@@ -37,13 +37,9 @@ using namespace Cats::Netycat;
 
 int main(int argc, char** argv) {
     
-    if(argc < 3) {
-        
-        std::cerr << "error: file name needed" << std::endl;
-        return 1;
-        
-    }
     try {
+        
+        if(argc < 3) throw InvalidArgumentException("File name needed");
         
         File file1(argv[1], File::Mode::READ);
         auto is = createDataViewInputStream(file1);
@@ -53,7 +49,7 @@ int main(int argc, char** argv) {
         while(std::size_t size = is.readSome(data, sizeof(data)))
             os.writeAll(data, size);
         
-    } catch(std::exception& e) { std::cerr << e.what() << std::endl; }
+    } catch(std::exception& e) { std::cerr << e.what() << std::endl; return 1; }
     
     return 0;
     

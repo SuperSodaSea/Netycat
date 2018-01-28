@@ -60,7 +60,7 @@ File::File(const FilePath& path, Mode mode) {
     
     DWORD attribute = FILE_ATTRIBUTE_NORMAL;
     
-    if(!(handle = CreateFileW(reinterpret_cast<const WCHAR*>(path.getData().getData()), access, share, nullptr, disposition, attribute, nullptr))) {
+    if(!(handle = CreateFileW(path.getData().getData(), access, share, nullptr, disposition, attribute, nullptr))) {
         
         throw Corecat::IOException("CreateFileW failed");
         
@@ -75,10 +75,10 @@ void File::read(Byte* buffer, std::size_t count, std::uint64_t offset) {
         throw Corecat::IOException("End of file");
     
     OVERLAPPED overlapped = {};
-    overlapped.Offset = static_cast<DWORD>(offset);
+    overlapped.Offset = DWORD(offset);
     overlapped.OffsetHigh = offset >> 32;
     DWORD byteCount;
-    if(!ReadFile(handle, buffer, count, &byteCount, &overlapped)) {
+    if(!ReadFile(handle, buffer, DWORD(count), &byteCount, &overlapped)) {
         
         throw Corecat::IOException("ReadFile failed");
         
@@ -90,10 +90,10 @@ void File::write(const Byte* buffer, std::size_t count, std::uint64_t offset) {
     assert(handle);
     
     OVERLAPPED overlapped = {};
-    overlapped.Offset = static_cast<DWORD>(offset);
+    overlapped.Offset = DWORD(offset);
     overlapped.OffsetHigh = offset >> 32;
     DWORD byteCount;
-    if(!WriteFile(handle, buffer, count, &byteCount, &overlapped)) {
+    if(!WriteFile(handle, buffer, DWORD(count), &byteCount, &overlapped)) {
         
         throw Corecat::IOException("WriteFile failed");
         

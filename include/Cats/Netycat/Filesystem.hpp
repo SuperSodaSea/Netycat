@@ -28,6 +28,7 @@
 #define CATS_NETYCAT_FILESYSTEM_HPP
 
 
+#include "Filesystem/Directory.hpp"
 #include "Filesystem/File.hpp"
 #include "Filesystem/FilePath.hpp"
 #include "Filesystem/MappedFile.hpp"

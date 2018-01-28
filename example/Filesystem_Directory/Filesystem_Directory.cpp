@@ -24,8 +24,6 @@
  *
  */
 
-#include <cstring>
-
 #include <iostream>
 
 #include "Cats/Corecat/Util.hpp"
@@ -40,19 +38,10 @@ int main(int argc, char** argv) {
     
     try {
         
-        if(argc < 3) throw InvalidArgumentException("File name needed");
+        if(argc < 2) throw InvalidArgumentException("File name needed");
         
-        File file1(argv[1], File::Mode::READ);
-        std::size_t size = std::size_t(file1.getSize());
-        MappedFile mappedFile1(file1, 0, size, MappedFile::Mode::READ);
-        auto data1 = mappedFile1.getData();
-        
-        File file2(argv[2], File::Mode::READ_WRITE | File::Mode::CREATE);
-        file2.setSize(size);
-        MappedFile mappedFile2(file2, 0, size, MappedFile::Mode::READ_WRITE);
-        auto data2 = mappedFile2.getData();
-        
-        std::memcpy(data2, data1, size);
+        for(auto&& x : Directory(argv[1]))
+            std::cout << String8(x.getData()) << std::endl;
         
     } catch(std::exception& e) { std::cerr << e.what() << std::endl; return 1; }
     
