@@ -33,25 +33,24 @@ namespace Cats {
 namespace Netycat {
 inline namespace Filesystem {
 
-Directory::Iterator::Iterator(const FilePath& path) {
+void Directory::Iterator::FindDeleter::operator ()(HANDLE handle) const noexcept { FindClose(handle); }
+
+Directory::Iterator::Iterator(const FilePath& path_) : path(path_) {
     
-    Corecat::WString str = path.getData();
-    str += str.isEmpty() || (str[str.getLength() - 1] != u'\\' && str[str.getLength() - 1] != u'/' && str[str.getLength() - 1] != u':') ? L"\\*" : L"*";
+    auto str = path.getString();
+    str += str.isEmpty() || (!str.endsWith(L'\\') && !str.endsWith(L'/') && !str.endsWith(L':')) ? L"\\*" : L"*";
     WIN32_FIND_DATAW data;
-    handle = FindFirstFileW(str.getData(), &data);
-    if(handle == INVALID_HANDLE_VALUE) {
+    auto handle_ = FindFirstFileW(str.getData(), &data);
+    if(handle_ == INVALID_HANDLE_VALUE) {
         
         if(GetLastError() == ERROR_FILE_NOT_FOUND) { handle = nullptr; return; }
         throw Corecat::SystemException("FindFirstFileW failed");
         
     }
+    handle = {handle_, FindDeleter()};
     name = reinterpret_cast<char16_t*>(data.cFileName);
     if(name == L"." || name == L"..") ++*this;
-    
-}
-Directory::Iterator::~Iterator() {
-    
-    if(handle) FindClose(handle);
+    else if(handle) name = path / name;
     
 }
 
@@ -60,14 +59,14 @@ Directory::Iterator& Directory::Iterator::operator ++() {
     while(true) {
         
         WIN32_FIND_DATAW data;
-        if(!FindNextFileW(handle, &data)) {
+        if(!FindNextFileW(handle.get(), &data)) {
             
-            if(GetLastError() == ERROR_NO_MORE_FILES) { FindClose(handle), handle = nullptr; break; }
+            if(GetLastError() == ERROR_NO_MORE_FILES) { handle = nullptr; break; }
             else throw Corecat::SystemException("FindNextFileW failed");
             
         }
         name = reinterpret_cast<char16_t*>(data.cFileName);
-        if(name != L"." && name != L"..") break;
+        if(name != L"." && name != L"..") { name = path / name; break; }
         
     }
     return *this;

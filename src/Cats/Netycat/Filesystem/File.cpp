@@ -60,7 +60,7 @@ File::File(const FilePath& path, Mode mode) {
     
     DWORD attribute = FILE_ATTRIBUTE_NORMAL;
     
-    if(!(handle = CreateFileW(path.getData().getData(), access, share, nullptr, disposition, attribute, nullptr))) {
+    if(!(handle = CreateFileW(path.getData(), access, share, nullptr, disposition, attribute, nullptr))) {
         
         throw Corecat::IOException("CreateFileW failed");
         

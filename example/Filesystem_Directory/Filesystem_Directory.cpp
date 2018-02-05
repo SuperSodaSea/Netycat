@@ -41,7 +41,12 @@ int main(int argc, char** argv) {
         if(argc < 2) throw InvalidArgumentException("File name needed");
         
         for(auto&& x : Directory(argv[1]))
-            std::cout << String8(x.getData()) << std::endl;
+            std::cout << String8(x.getString()) << std::endl;
+        
+        std::cout << std::endl;
+        
+        for(auto&& x : RecursiveDirectory(argv[1]))
+            std::cout << String8(x.getString()) << std::endl;
         
     } catch(std::exception& e) { std::cerr << e.what() << std::endl; return 1; }
     

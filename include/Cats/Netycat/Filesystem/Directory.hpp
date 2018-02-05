@@ -28,6 +28,9 @@
 #define CATS_NETYCAT_FILESYSTEM_DIRECTORY_HPP
 
 
+#include <memory>
+#include <vector>
+
 #include "Cats/Corecat/Win32/Windows.hpp"
 #include "Cats/Netycat/Filesystem/FilePath.hpp"
 
@@ -54,19 +57,20 @@ public:
         using reference = value_type&;
         using iterator_category = std::input_iterator_tag;
         
+        struct FindDeleter { void operator ()(HANDLE handle) const noexcept; };
+        
     private:
         
-        HANDLE handle = nullptr;
+        std::shared_ptr<void> handle;
+        FilePath path;
         FilePath name;
         
     private:
         
         Iterator() = default;
-        Iterator(const FilePath& path);
+        Iterator(const FilePath& path_);
         
     public:
-        
-        ~Iterator();
         
         const FilePath& operator *() const noexcept { return name; }
         const FilePath* operator ->() const noexcept { return &name; }
@@ -82,6 +86,105 @@ private:
 public:
     
     Directory(FilePath path_) : path(std::move(path_)) {}
+    
+    const FilePath& getPath() const noexcept { return path; }
+    
+    Iterator begin() const { return {path}; }
+    Iterator end() const noexcept { return {}; }
+    
+};
+
+
+class RecursiveDirectory {
+    
+public:
+    
+    class Iterator : public Corecat::EqualityOperator<Iterator> {
+        
+    private:
+        
+        friend RecursiveDirectory;
+        
+    public:
+        
+        using value_type = FilePath;
+        using difference_type = std::ptrdiff_t;
+        using pointer = value_type*;
+        using reference = value_type&;
+        using iterator_category = std::input_iterator_tag;
+        
+    private:
+        
+        std::vector<std::pair<Directory, Directory::Iterator>> stack;
+        FilePath name;
+        
+    private:
+        
+        Iterator() = default;
+        Iterator(const FilePath& path) {
+            
+            Directory dir(path);
+            auto b = dir.begin(), e = dir.end();
+            if(b != e) {
+                
+                stack.emplace_back(dir, b);
+                name = *b;
+                
+            }
+            
+        }
+        
+    public:
+        
+        const FilePath& operator *() const noexcept { return name; }
+        const FilePath* operator ->() const noexcept { return &name; }
+        Iterator& operator ++() {
+            
+            if(name.isDirectory()) {
+                
+                Directory dir(name);
+                auto b = dir.begin(), e = dir.end();
+                if(b != e) {
+                    
+                    stack.emplace_back(dir, b);
+                    name = *b;
+                    return *this;
+                    
+                }
+                
+            }
+            ++stack.back().second;
+            while(stack.back().second == stack.back().first.end()) {
+                
+                stack.pop_back();
+                if(stack.empty()) return *this;
+                ++stack.back().second;
+                
+            }
+            name = *stack.back().second;
+            return *this;
+            
+        }
+        friend bool operator ==(const Iterator& a, const Iterator& b) noexcept {
+            
+            if(a.stack.size() != b.stack.size()) return false;
+            for(std::size_t i = a.stack.size() - 1; i != std::size_t(-1); --i)
+                if(a.stack[i].second != b.stack[i].second) return false;
+            return true;
+            
+        }
+        
+    };
+    
+private:
+    
+    FilePath path;
+    
+public:
+    
+    RecursiveDirectory(FilePath path_) : path(std::move(path_)) {}
+    
+    const FilePath& getPath() const noexcept { return path; }
     
     Iterator begin() const { return path; }
     Iterator end() const noexcept { return {}; }

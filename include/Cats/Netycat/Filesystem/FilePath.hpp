@@ -30,7 +30,10 @@
 
 #include "Cats/Corecat/System/OS.hpp"
 #include "Cats/Corecat/Text/String.hpp"
+#include "Cats/Corecat/Util/Exception.hpp"
+#include "Cats/Corecat/Util/Iterator.hpp"
 #include "Cats/Corecat/Util/Operator.hpp"
+#include "Cats/Corecat/Win32/Windows.hpp"
 
 
 namespace Cats {
@@ -43,35 +46,91 @@ private:
     
     template <typename C>
     using String = Corecat::String<C>;
-    using UTF8Charset = Corecat::UTF8Charset<>;
-    using WideCharset = Corecat::WideCharset<>;
     
 public:
     
 #if defined(CATS_CORECAT_SYSTEM_OS_WINDOWS)
-    using CharsetType = WideCharset;
+    using CharsetType = Corecat::WideCharset<>;
 #elif defined(CATS_CORECAT_SYSTEM_OS_LINUX) || defined(CATS_CORECAT_SYSTEM_OS_MACOS)
-    using CharsetType = UTF8Charset;
+    using CharsetType = Corecat::UTF8Charset<>;
 #else
 #   error Unknown OS
 #endif
     
+    using CharType = CharsetType::CharType;
     using StringType = String<CharsetType>;
     using StringViewType = StringType::StringViewType;
+    
+    class Iterator;
+    using ReverseIterator = Corecat::ReverseIterator<Iterator>;
+    
+public:
+    
+#if defined(CATS_CORECAT_SYSTEM_OS_WINDOWS)
+    static constexpr wchar_t SEPARATOR = L'\\';
+#elif defined(CATS_CORECAT_SYSTEM_OS_LINUX) || defined(CATS_CORECAT_SYSTEM_OS_MACOS)
+    static constexpr char SEPARATOR = '/';
+#endif
+
+    constexpr static bool isSeparator(CharType c) {
+#if defined(CATS_CORECAT_SYSTEM_OS_WINDOWS)
+        return c == L'/' || c == L'\\';
+#elif defined(CATS_CORECAT_SYSTEM_OS_LINUX) || defined(CATS_CORECAT_SYSTEM_OS_MACOS)
+        return c == '/';
+#endif
+    }
     
 private:
     
     StringType data;
+    std::size_t rootLength = 0;
+    std::size_t filenameOffset = 0;
+    
+private:
+    
+    void init() noexcept {
+        
+        // Root length
+#if defined(CATS_CORECAT_SYSTEM_OS_WINDOWS)
+        if(data.getLength() >= 2 && ((data[0] >= L'A' && data[0] <= L'Z') || (data[0] >= L'a' && data[0] <= L'z')) && data[1] == L':')
+            rootLength = 2;
+#endif
+        
+        // File name offset
+        if(rootLength != data.getLength()) {
+            
+            auto b = data.begin(), p = b + rootLength, q = data.end();
+            while(!isSeparator(q[-1]) && p != --q);
+            filenameOffset = q - b;
+            
+        }
+        
+    }
     
 public:
     
     FilePath() = default;
-    FilePath(StringType&& data_) : data(data_) {}
+    FilePath(StringType&& data_) : data(data_) { init(); }
     template <typename T>
-    FilePath(const T& t) : data(t) {}
+    FilePath(const T& t) : data(t) { init(); }
+    template <typename I>
+    FilePath(I b, I e) : data(b, e) { init(); }
     FilePath(const FilePath& src) = default;
     
     FilePath& operator =(const FilePath& src) = default;
+    
+    FilePath& operator /=(const FilePath& b) {
+        
+        if(b.isAbsolute() || (b.hasRoot() && getRootString() != b.getRootString())) data = b.data;
+        else if(b.hasRootDirectory()) data = getRootString() + b.getString();
+        else if(hasFilename() || (!hasRootDirectory() && isAbsolute())) data += SEPARATOR + b.getString();
+        else data += b.getString();
+        return *this;
+        
+    }
+    
+    friend FilePath operator /(const FilePath& a, const FilePath& b) { return FilePath(a) /= b; }
+    friend FilePath operator /(FilePath&& a, const FilePath& b) { return a /= b; }
     
     friend bool operator ==(const FilePath& a, const FilePath& b) noexcept { return a.data == b.data; }
     friend bool operator <(const FilePath& a, const FilePath& b) noexcept { return a.data < b.data; }
@@ -79,13 +138,55 @@ public:
     operator StringType() const { return data; }
     operator StringViewType() const { return data; }
     
-    const StringType& getData() const noexcept { return data; }
+    const StringType& getString() const noexcept { return data; }
+    const CharType* getData() const noexcept { return data.getData(); }
     
     bool isEmpty() const noexcept { return data.isEmpty(); }
+    
+    bool hasRoot() const noexcept { return rootLength; }
+    bool hasRootDirectory() const noexcept { return data.getLength() > rootLength && isSeparator(data[rootLength]); }
+    bool hasFilename() const noexcept { return data.getLength() >= filenameOffset; }
+    
+    bool isAbsolute() const noexcept {
+#if defined(CATS_CORECAT_SYSTEM_OS_WINDOWS)
+        return hasRoot() && hasRootDirectory();
+#elif defined(CATS_CORECAT_SYSTEM_OS_LINUX) || defined(CATS_CORECAT_SYSTEM_OS_MACOS)
+        return hasRootDirectory();
+#endif
+    }
+    
+    StringViewType getRootString() const noexcept { return data.substr(0, rootLength); }
+    FilePath getRoot() const { return getRootString(); }
+    StringViewType getRelativePathString() const noexcept {
+        
+        auto p = data.begin() + rootLength, e = data.end();
+        while(p != e && isSeparator(*p)) ++p;
+        return {p, e};
+        
+    }
+    FilePath getRelativePath() const { return getRelativePathString(); }
+    StringViewType getFilenameString() const noexcept { return data.slice(filenameOffset); }
+    FilePath getFilename() const noexcept { return getFilenameString(); }
     
     void clear() noexcept { data.clear(); }
     
     void swap(FilePath& path) noexcept { std::swap(data, path.data); }
+    
+    bool isDirectory() const { return GetFileAttributesW(data.getData()) & FILE_ATTRIBUTE_DIRECTORY; }
+    
+public:
+    
+    static FilePath getCurrent() {
+        
+        DWORD size = GetCurrentDirectoryW(0, nullptr);
+        if(!size) throw Corecat::SystemException("GetCurrentDirectoryW failed");
+        Corecat::WString data;
+        data.setLength(size);
+        if(!GetCurrentDirectoryW(size, data.getData()))
+            throw Corecat::SystemException("GetCurrentDirectoryW failed");
+        return data;
+        
+    }
     
 };
 
