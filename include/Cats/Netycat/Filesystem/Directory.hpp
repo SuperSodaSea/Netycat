@@ -31,8 +31,9 @@
 #include <memory>
 #include <vector>
 
+#include "FileInfo.hpp"
+#include "FilePath.hpp"
 #include "Cats/Corecat/Win32/Windows.hpp"
-#include "Cats/Netycat/Filesystem/FilePath.hpp"
 
 
 namespace Cats {
@@ -121,50 +122,13 @@ public:
     private:
         
         Iterator() = default;
-        Iterator(const FilePath& path) {
-            
-            Directory dir(path);
-            auto b = dir.begin(), e = dir.end();
-            if(b != e) {
-                
-                stack.emplace_back(dir, b);
-                name = *b;
-                
-            }
-            
-        }
+        Iterator(const FilePath& path);
         
     public:
         
         const FilePath& operator *() const noexcept { return name; }
         const FilePath* operator ->() const noexcept { return &name; }
-        Iterator& operator ++() {
-            
-            if(name.isDirectory()) {
-                
-                Directory dir(name);
-                auto b = dir.begin(), e = dir.end();
-                if(b != e) {
-                    
-                    stack.emplace_back(dir, b);
-                    name = *b;
-                    return *this;
-                    
-                }
-                
-            }
-            ++stack.back().second;
-            while(stack.back().second == stack.back().first.end()) {
-                
-                stack.pop_back();
-                if(stack.empty()) return *this;
-                ++stack.back().second;
-                
-            }
-            name = *stack.back().second;
-            return *this;
-            
-        }
+        Iterator& operator ++();
         friend bool operator ==(const Iterator& a, const Iterator& b) noexcept {
             
             if(a.stack.size() != b.stack.size()) return false;

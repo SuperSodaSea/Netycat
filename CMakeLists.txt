@@ -18,15 +18,10 @@ endif()
 
 include_directories("include")
 
-set(SRC
-    src/Cats/Netycat/Filesystem/Directory.cpp
-    src/Cats/Netycat/Filesystem/File.cpp
-    src/Cats/Netycat/Filesystem/MappedFile.cpp
-    src/Cats/Netycat/Network/IP/IPResolver.cpp)
-if(CMAKE_SYSTEM_NAME MATCHES "Windows")
-    set(SRC
-        ${SRC}
-        src/Cats/Netycat/Network/Win32/WSA.cpp)
+aux_source_directory("src/Cats/Netycat/Filesystem" SRC)
+aux_source_directory("src/Cats/Netycat/Network/IP" SRC)
+if(WIN32)
+    aux_source_directory("src/Cats/Netycat/Network/Win32" SRC)
 endif()
 
 add_library(Netycat STATIC ${SRC})

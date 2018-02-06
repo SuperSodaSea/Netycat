@@ -84,11 +84,14 @@ private:
     
     StringType data;
     std::size_t rootLength = 0;
-    std::size_t filenameOffset = 0;
+    std::size_t rootDirectoryLength = 0;
+    std::size_t filenameLength = 0;
     
 private:
     
     void init() noexcept {
+        
+        auto b = data.begin(), e = data.end();
         
         // Root length
 #if defined(CATS_CORECAT_SYSTEM_OS_WINDOWS)
@@ -96,12 +99,19 @@ private:
             rootLength = 2;
 #endif
         
-        // File name offset
+        // Root directory length
+        {
+            auto p = b + rootLength;
+            while(p != e && isSeparator(*p)) ++p;
+            rootDirectoryLength = p - b;
+        }
+        
+        // Filename length
         if(rootLength != data.getLength()) {
             
-            auto b = data.begin(), p = b + rootLength, q = data.end();
+            auto p = b + rootDirectoryLength, q = e;
             while(!isSeparator(q[-1]) && p != --q);
-            filenameOffset = q - b;
+            filenameLength = e - q;
             
         }
         
@@ -110,21 +120,26 @@ private:
 public:
     
     FilePath() = default;
-    FilePath(StringType&& data_) : data(data_) { init(); }
+    FilePath(StringType&& data_) : data(std::move(data_)) { init(); }
     template <typename T>
-    FilePath(const T& t) : data(t) { init(); }
+    FilePath(const T& t) : FilePath(StringType(t)) {}
     template <typename I>
-    FilePath(I b, I e) : data(b, e) { init(); }
+    FilePath(I b, I e) : FilePath({b, e}) {}
     FilePath(const FilePath& src) = default;
     
     FilePath& operator =(const FilePath& src) = default;
     
     FilePath& operator /=(const FilePath& b) {
         
-        if(b.isAbsolute() || (b.hasRoot() && getRootString() != b.getRootString())) data = b.data;
-        else if(b.hasRootDirectory()) data = getRootString() + b.getString();
-        else if(hasFilename() || (!hasRootDirectory() && isAbsolute())) data += SEPARATOR + b.getString();
-        else data += b.getString();
+        if(b.isAbsolute() || (b.hasRoot() && getRootString() != b.getRootString())) *this = b;
+        else {
+            
+            if(b.hasRootDirectory()) data.setLength(rootLength), data += b.getString();
+            else if(hasFilename() || (!hasRootDirectory() && isAbsolute())) data += SEPARATOR + b.getString();
+            else data += b.getString();
+            init();
+            
+        }
         return *this;
         
     }
@@ -144,8 +159,8 @@ public:
     bool isEmpty() const noexcept { return data.isEmpty(); }
     
     bool hasRoot() const noexcept { return rootLength; }
-    bool hasRootDirectory() const noexcept { return data.getLength() > rootLength && isSeparator(data[rootLength]); }
-    bool hasFilename() const noexcept { return data.getLength() >= filenameOffset; }
+    bool hasRootDirectory() const noexcept { return rootDirectoryLength; }
+    bool hasFilename() const noexcept { return filenameLength; }
     
     bool isAbsolute() const noexcept {
 #if defined(CATS_CORECAT_SYSTEM_OS_WINDOWS)
@@ -157,22 +172,16 @@ public:
     
     StringViewType getRootString() const noexcept { return data.substr(0, rootLength); }
     FilePath getRoot() const { return getRootString(); }
-    StringViewType getRelativePathString() const noexcept {
-        
-        auto p = data.begin() + rootLength, e = data.end();
-        while(p != e && isSeparator(*p)) ++p;
-        return {p, e};
-        
-    }
+    StringViewType getRootDirectoryString() const noexcept { return data.substr(0, rootDirectoryLength); }
+    FilePath getRootDirectory() const { return getRootDirectoryString(); }
+    StringViewType getRelativePathString() const noexcept { return data.substr(rootDirectoryLength); }
     FilePath getRelativePath() const { return getRelativePathString(); }
-    StringViewType getFilenameString() const noexcept { return data.slice(filenameOffset); }
+    StringViewType getFilenameString() const noexcept { return data.slice(data.getLength() - filenameLength); }
     FilePath getFilename() const noexcept { return getFilenameString(); }
     
     void clear() noexcept { data.clear(); }
     
     void swap(FilePath& path) noexcept { std::swap(data, path.data); }
-    
-    bool isDirectory() const { return GetFileAttributesW(data.getData()) & FILE_ATTRIBUTE_DIRECTORY; }
     
 public:
     

@@ -73,6 +73,48 @@ Directory::Iterator& Directory::Iterator::operator ++() {
     
 }
 
+
+RecursiveDirectory::Iterator::Iterator(const FilePath& path) {
+    
+    Directory dir(path);
+    auto b = dir.begin(), e = dir.end();
+    if(b != e) {
+        
+        stack.emplace_back(dir, b);
+        name = *b;
+        
+    }
+    
+}
+
+RecursiveDirectory::Iterator& RecursiveDirectory::Iterator::operator ++() {
+    
+    if(FileInfo::isDirectory(name)) {
+        
+        Directory dir(name);
+        auto b = dir.begin(), e = dir.end();
+        if(b != e) {
+            
+            stack.emplace_back(dir, b);
+            name = *b;
+            return *this;
+            
+        }
+        
+    }
+    ++stack.back().second;
+    while(stack.back().second == stack.back().first.end()) {
+        
+        stack.pop_back();
+        if(stack.empty()) return *this;
+        ++stack.back().second;
+        
+    }
+    name = *stack.back().second;
+    return *this;
+    
+}
+
 }
 }
 }

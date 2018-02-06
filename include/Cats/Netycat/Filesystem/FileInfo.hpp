@@ -24,15 +24,41 @@
  *
  */
 
-#ifndef CATS_NETYCAT_FILESYSTEM_HPP
-#define CATS_NETYCAT_FILESYSTEM_HPP
+#ifndef CATS_NETYCAT_FILESYSTEM_FILEINFO_HPP
+#define CATS_NETYCAT_FILESYSTEM_FILEINFO_HPP
 
 
-#include "Filesystem/Directory.hpp"
-#include "Filesystem/File.hpp"
-#include "Filesystem/FileInfo.hpp"
-#include "Filesystem/FilePath.hpp"
-#include "Filesystem/MappedFile.hpp"
+#include "FilePath.hpp"
+#include "Cats/Corecat/Win32/Windows.hpp"
+
+
+namespace Cats {
+namespace Netycat {
+inline namespace Filesystem {
+
+enum class FileType {
+    
+    NONE,
+    FILE,
+    DIRECTORY,
+    
+};
+
+struct FileInfo {
+    
+    FileInfo() = delete;
+    
+    static FileType getType(const FilePath& path);
+    static bool isFile(const FilePath& path) { return getType(path) == FileType::FILE; }
+    static bool isDirectory(const FilePath& path) { return getType(path) == FileType::DIRECTORY; }
+    
+    static std::uint64_t getSize(const FilePath& path);
+    
+};
+
+}
+}
+}
 
 
 #endif

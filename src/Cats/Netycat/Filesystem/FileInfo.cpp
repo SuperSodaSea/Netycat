@@ -24,15 +24,34 @@
  *
  */
 
-#ifndef CATS_NETYCAT_FILESYSTEM_HPP
-#define CATS_NETYCAT_FILESYSTEM_HPP
+#include "Cats/Netycat/Filesystem/Directory.hpp"
+
+#include "Cats/Corecat/Util/Exception.hpp"
 
 
-#include "Filesystem/Directory.hpp"
-#include "Filesystem/File.hpp"
-#include "Filesystem/FileInfo.hpp"
-#include "Filesystem/FilePath.hpp"
-#include "Filesystem/MappedFile.hpp"
+namespace Cats {
+namespace Netycat {
+inline namespace Filesystem {
 
+FileType FileInfo::getType(const FilePath& path) {
+    
+    DWORD attribute = GetFileAttributesW(path.getData());
+    if(attribute == INVALID_FILE_ATTRIBUTES)
+        throw Corecat::SystemException("GetFileAttributesW failed");
+    if(attribute & FILE_ATTRIBUTE_DIRECTORY) return FileType::DIRECTORY;
+    else return FileType::FILE;
+    
+}
 
-#endif
+std::uint64_t FileInfo::getSize(const FilePath& path) {
+    
+    WIN32_FILE_ATTRIBUTE_DATA data;
+    if(!GetFileAttributesExW(path.getData(), GetFileExInfoStandard, &data))
+        throw Corecat::SystemException("GetFileAttributesExW failed");
+    return (std::uint64_t(data.nFileSizeHigh) << 32) | data.nFileSizeLow;
+    
+}
+
+}
+}
+}
