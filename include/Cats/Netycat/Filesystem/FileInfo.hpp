@@ -39,6 +39,7 @@ inline namespace Filesystem {
 enum class FileType {
     
     NONE,
+    NOT_FOUND,
     FILE,
     DIRECTORY,
     
@@ -49,6 +50,7 @@ struct FileInfo {
     FileInfo() = delete;
     
     static FileType getType(const FilePath& path);
+    static bool isExists(const FilePath& path) { return getType(path) != FileType::NOT_FOUND; }
     static bool isFile(const FilePath& path) { return getType(path) == FileType::FILE; }
     static bool isDirectory(const FilePath& path) { return getType(path) == FileType::DIRECTORY; }
     

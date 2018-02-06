@@ -37,7 +37,8 @@ FileType FileInfo::getType(const FilePath& path) {
     
     DWORD attribute = GetFileAttributesW(path.getData());
     if(attribute == INVALID_FILE_ATTRIBUTES)
-        throw Corecat::SystemException("GetFileAttributesW failed");
+        if(GetLastError() == ERROR_FILE_NOT_FOUND) return FileType::NOT_FOUND;
+        else throw Corecat::SystemException("GetFileAttributesW failed");
     if(attribute & FILE_ATTRIBUTE_DIRECTORY) return FileType::DIRECTORY;
     else return FileType::FILE;
     
