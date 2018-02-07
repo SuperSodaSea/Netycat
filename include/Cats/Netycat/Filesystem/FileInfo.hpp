@@ -45,6 +45,14 @@ enum class FileType {
     
 };
 
+struct SpaceInfo {
+    
+    std::uint64_t capacity;
+    std::uint64_t free;
+    std::uint64_t available;
+    
+};
+
 struct FileInfo {
     
     FileInfo() = delete;
@@ -55,6 +63,8 @@ struct FileInfo {
     static bool isDirectory(const FilePath& path) { return getType(path) == FileType::DIRECTORY; }
     
     static std::uint64_t getSize(const FilePath& path);
+    
+    static SpaceInfo getSpace(const FilePath& path);
     
 };
 

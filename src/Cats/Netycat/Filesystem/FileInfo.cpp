@@ -36,9 +36,12 @@ inline namespace Filesystem {
 FileType FileInfo::getType(const FilePath& path) {
     
     DWORD attribute = GetFileAttributesW(path.getData());
-    if(attribute == INVALID_FILE_ATTRIBUTES)
+    if(attribute == INVALID_FILE_ATTRIBUTES) {
+        
         if(GetLastError() == ERROR_FILE_NOT_FOUND) return FileType::NOT_FOUND;
         else throw Corecat::SystemException("GetFileAttributesW failed");
+        
+    }
     if(attribute & FILE_ATTRIBUTE_DIRECTORY) return FileType::DIRECTORY;
     else return FileType::FILE;
     
@@ -50,6 +53,19 @@ std::uint64_t FileInfo::getSize(const FilePath& path) {
     if(!GetFileAttributesExW(path.getData(), GetFileExInfoStandard, &data))
         throw Corecat::SystemException("GetFileAttributesExW failed");
     return (std::uint64_t(data.nFileSizeHigh) << 32) | data.nFileSizeLow;
+    
+}
+
+SpaceInfo FileInfo::getSpace(const FilePath& path) {
+    
+    ULARGE_INTEGER capacity, free, available;
+    if(!GetDiskFreeSpaceExW(path.getData(), &available, &capacity, &free))
+        throw Corecat::SystemException("GetDiskFreeSpaceEx failed");
+    SpaceInfo space;
+    space.capacity = capacity.QuadPart;
+    space.free = free.QuadPart;
+    space.available = available.QuadPart;
+    return space;
     
 }
 
