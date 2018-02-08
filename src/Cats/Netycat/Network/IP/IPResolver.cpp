@@ -36,7 +36,11 @@ namespace Netycat {
 inline namespace Network {
 inline namespace IP {
 
-SystemIPResolver::SystemIPResolver() { initWSA(); }
+SystemIPResolver::SystemIPResolver() {
+    
+    initWSA();
+    
+}
 
 std::vector<IPAddress> SystemIPResolver::resolve(const String8& name) {
     
@@ -74,6 +78,7 @@ std::vector<IPAddress> SystemIPResolver::resolve(const String8& name) {
         
     }
     freeaddrinfo(result);
+    if(addressList.empty()) throw Corecat::IOException("Unable to resolve hostname");
     return addressList;
     
 }

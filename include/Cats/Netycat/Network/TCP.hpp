@@ -29,6 +29,7 @@
 
 
 #include "TCP/TCPEndpoint.hpp"
+#include "TCP/TCPSocket.hpp"
 
 
 #endif

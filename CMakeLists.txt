@@ -20,6 +20,7 @@ include_directories("include")
 
 aux_source_directory("src/Cats/Netycat/Filesystem" SRC)
 aux_source_directory("src/Cats/Netycat/Network/IP" SRC)
+aux_source_directory("src/Cats/Netycat/Network/TCP" SRC)
 if(WIN32)
     aux_source_directory("src/Cats/Netycat/Network/Win32" SRC)
 endif()
