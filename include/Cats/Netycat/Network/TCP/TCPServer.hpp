@@ -24,13 +24,54 @@
  *
  */
 
-#ifndef CATS_NETYCAT_NETWORK_TCP_HPP
-#define CATS_NETYCAT_NETWORK_TCP_HPP
+#ifndef CATS_NETYCAT_NETWORK_TCP_TCPSERVER_HPP
+#define CATS_NETYCAT_NETWORK_TCP_TCPSERVER_HPP
 
 
-#include "TCP/TCPEndpoint.hpp"
-#include "TCP/TCPServer.hpp"
-#include "TCP/TCPSocket.hpp"
+#include "TCPSocket.hpp"
+
+
+namespace Cats {
+namespace Netycat {
+inline namespace Network {
+inline namespace TCP {
+
+class TCPServer {
+    
+private:
+    
+    using Byte = Corecat::Byte;
+    
+public:
+    
+    using NativeHandleType = SOCKET;
+    using EndpointType = TCPEndpoint;
+    
+private:
+    
+    NativeHandleType socket = 0;
+    
+public:
+    
+    TCPServer();
+    TCPServer(NativeHandleType socket_) : socket(socket_) {}
+    TCPServer(const TCPServer& src) = delete;
+    TCPServer(TCPServer&& src) : socket(src.socket) { src.socket = 0; }
+    ~TCPServer();
+    
+    TCPServer& operator =(const TCPServer& src) = delete;
+    TCPServer& operator =(TCPServer&& src) { socket = src.socket, src.socket = 0; return *this; }
+    
+    void listen(EndpointType endpoint, std::size_t backlog = 128);
+    void accept(TCPSocket& s);
+    void close();
+    
+};
+
+}
+}
+}
+}
 
 
 #endif
