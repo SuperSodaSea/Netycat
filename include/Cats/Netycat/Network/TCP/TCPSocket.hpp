@@ -64,7 +64,7 @@ public:
     ~TCPSocket();
     
     TCPSocket& operator =(const TCPSocket& src) = delete;
-    TCPSocket& operator =(TCPSocket&& src) { socket = src.socket, src.socket = 0; return *this; }
+    TCPSocket& operator =(TCPSocket&& src) { if(socket) close(); socket = src.socket, src.socket = 0; return *this; }
     
     void connect(const EndpointType& endpoint);
     void close();

@@ -28,6 +28,7 @@
 
 #include <cstddef>
 
+#include "Cats/Corecat/Util/Endian.hpp"
 #include "Cats/Netycat/Network/Win32/WSA.hpp"
 
 
@@ -62,7 +63,7 @@ std::vector<IPAddress> SystemIPResolver::resolve(const String8& name) {
         case AF_INET: {
             
             sockaddr_in* saddr4 = reinterpret_cast<sockaddr_in*>(cur->ai_addr);
-            addressList.emplace_back(IPv4Address(ntohl(saddr4->sin_addr.s_addr)));
+            addressList.emplace_back(IPv4Address(Corecat::convertBigToNative(saddr4->sin_addr.s_addr)));
             break;
             
         }

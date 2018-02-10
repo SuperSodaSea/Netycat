@@ -26,6 +26,7 @@
 
 #include "Cats/Netycat/Network/TCP/TCPServer.hpp"
 
+#include "Cats/Corecat/Util/Endian.hpp"
 #include "Cats/Netycat/Network/Win32/WSA.hpp"
 
 
@@ -48,7 +49,7 @@ TCPServer::~TCPServer() {
 void TCPServer::listen(TCPEndpoint endpoint, std::size_t backlog) {
     
     SOCKET sock;
-    sockaddr_storage saddr;
+    sockaddr_storage saddr = {};
     switch(endpoint.getAddress().getType()) {
     case IPAddress::Type::IPv4: {
         
@@ -58,8 +59,8 @@ void TCPServer::listen(TCPEndpoint endpoint, std::size_t backlog) {
         std::uint16_t port = endpoint.getPort();
         sockaddr_in* saddr4 = reinterpret_cast<sockaddr_in*>(&saddr);
         saddr4->sin_family = AF_INET;
-        saddr4->sin_port = ::htons(port);
-        saddr4->sin_addr.s_addr = ::htonl(addr);
+        saddr4->sin_port = Corecat::convertNativeToBig(port);
+        saddr4->sin_addr.s_addr = Corecat::convertNativeToBig(addr);
         break;
         
     }
@@ -72,9 +73,8 @@ void TCPServer::listen(TCPEndpoint endpoint, std::size_t backlog) {
         std::uint16_t port = endpoint.getPort();
         sockaddr_in6* saddr6 = reinterpret_cast<sockaddr_in6*>(&saddr);
         saddr6->sin6_family = AF_INET6;
-        saddr6->sin6_port = ::htons(port);
-        saddr6->sin6_flowinfo = 0;
-        saddr6->sin6_scope_id = ::htonl(scope);
+        saddr6->sin6_port = Corecat::convertNativeToBig(port);
+        saddr6->sin6_scope_id = Corecat::convertNativeToBig(scope);
         std::memcpy(saddr6->sin6_addr.s6_addr, addr, 16);
         break;
         

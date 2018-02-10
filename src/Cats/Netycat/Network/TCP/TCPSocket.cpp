@@ -26,6 +26,7 @@
 
 #include "Cats/Netycat/Network/TCP/TCPSocket.hpp"
 
+#include "Cats/Corecat/Util/Endian.hpp"
 #include "Cats/Netycat/Network/Win32/WSA.hpp"
 
 
@@ -58,8 +59,8 @@ void TCPSocket::connect(const EndpointType& endpoint) {
         std::uint16_t port = endpoint.getPort();
         sockaddr_in* saddr4 = reinterpret_cast<sockaddr_in*>(&saddr);
         saddr4->sin_family = AF_INET;
-        saddr4->sin_port = ::htons(port);
-        saddr4->sin_addr.s_addr = ::htonl(addr);
+        saddr4->sin_port = Corecat::convertNativeToBig(port);
+        saddr4->sin_addr.s_addr = Corecat::convertNativeToBig(addr);
         break;
         
     }
@@ -72,8 +73,8 @@ void TCPSocket::connect(const EndpointType& endpoint) {
         std::uint16_t port = endpoint.getPort();
         sockaddr_in6* saddr6 = reinterpret_cast<sockaddr_in6*>(&saddr);
         saddr6->sin6_family = AF_INET6;
-        saddr6->sin6_port = ::htons(port);
-        saddr6->sin6_scope_id = ::htonl(scope);
+        saddr6->sin6_port = Corecat::convertNativeToBig(port);
+        saddr6->sin6_scope_id = Corecat::convertNativeToBig(scope);
         std::memcpy(saddr6->sin6_addr.s6_addr, addr, 16);
         break;
         
@@ -142,8 +143,8 @@ TCPSocket::EndpointType TCPSocket::getRemoteEndpoint() {
     case AF_INET: {
         
         sockaddr_in* saddr4 = reinterpret_cast<sockaddr_in*>(&saddr);
-        IPv4Address address = ::ntohl(saddr4->sin_addr.s_addr);
-        std::uint16_t port = ::ntohs(saddr4->sin_port);
+        IPv4Address address = Corecat::convertBigToNative(saddr4->sin_addr.s_addr);
+        std::uint16_t port = Corecat::convertBigToNative(saddr4->sin_port);
         return {address, port};
         
     }
@@ -151,7 +152,7 @@ TCPSocket::EndpointType TCPSocket::getRemoteEndpoint() {
         
         sockaddr_in6* saddr6 = reinterpret_cast<sockaddr_in6*>(&saddr);
         IPv6Address address = {saddr6->sin6_addr.s6_addr, ::ntohl(saddr6->sin6_scope_id)};
-        std::uint16_t port = ::ntohs(saddr6->sin6_port);
+        std::uint16_t port = Corecat::convertBigToNative(saddr6->sin6_port);
         return {address, port};
         
     }

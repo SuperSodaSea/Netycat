@@ -60,7 +60,7 @@ public:
     ~TCPServer();
     
     TCPServer& operator =(const TCPServer& src) = delete;
-    TCPServer& operator =(TCPServer&& src) { socket = src.socket, src.socket = 0; return *this; }
+    TCPServer& operator =(TCPServer&& src) { if(socket) close(); socket = src.socket, src.socket = 0; return *this; }
     
     void listen(EndpointType endpoint, std::size_t backlog = 128);
     void accept(TCPSocket& s);
