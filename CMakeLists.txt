@@ -32,7 +32,8 @@ set(EXAMPLE
     Filesystem_Directory
     Filesystem_File
     Filesystem_MappedFile
-    Network_IPResolver)
+    Network_IPResolver
+    Network_TCPDaytimeSync)
 
 foreach(example ${EXAMPLE})
     add_executable(${example} example/${example}/${example}.cpp)
