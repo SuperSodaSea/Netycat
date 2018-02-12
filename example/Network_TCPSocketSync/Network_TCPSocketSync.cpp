@@ -25,6 +25,7 @@
  */
 
 #include <iostream>
+#include <thread>
 
 #include "Cats/Corecat/Util.hpp"
 #include "Cats/Netycat/Network/IP.hpp"
@@ -35,18 +36,41 @@ using namespace Cats::Corecat;
 using namespace Cats::Netycat;
 
 
-int main(int argc, char** argv) {
+void server() {
+    
+    TCPServer server;
+    server.listen({IPv4Address::getAny(), 12345});
+    TCPSocket socket;
+    server.accept(socket);
+    const char data[] = "Hello, Netycat!";
+    std::uint8_t size = sizeof(data) - 1;
+    socket.writeAll(&size, 1);
+    socket.writeAll(data, size);
+    
+}
+
+void client() {
+    
+    TCPSocket socket;
+    socket.connect({IPv4Address::getLoopback(), 12345});
+    std::uint8_t size;
+    char buffer[256];
+    socket.readAll(&size, 1);
+    socket.readAll(buffer, size);
+    
+    std::cout.write(buffer, size) << std::endl;
+    
+}
+
+
+int main() {
     
     try {
         
-        if(argc < 2) throw InvalidArgumentException("Host name needed");
-        
-        TCPSocket socket;
-        socket.connect({SystemIPResolver().resolve(argv[1])[0], 13});
-        char buffer[512];
-        for(std::size_t size; (size = socket.readSome(reinterpret_cast<Byte*>(buffer), sizeof(buffer))); )
-            std::cout.write(buffer, size);
-        std::cout << std::endl;
+        std::thread serverThread(server);
+        std::thread clientThread(client);
+        serverThread.join();
+        clientThread.join();
         
     } catch(std::exception& e) { std::cerr << e.what() << std::endl; return 1; }
     

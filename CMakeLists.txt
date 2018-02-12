@@ -33,7 +33,7 @@ set(EXAMPLE
     Filesystem_File
     Filesystem_MappedFile
     Network_IPResolver
-    Network_TCPDaytimeSync)
+    Network_TCPSocketSync)
 
 foreach(example ${EXAMPLE})
     add_executable(${example} example/${example}/${example}.cpp)

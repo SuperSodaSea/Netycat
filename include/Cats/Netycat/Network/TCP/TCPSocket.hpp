@@ -69,10 +69,10 @@ public:
     void connect(const EndpointType& endpoint);
     void close();
     
-    std::size_t readSome(Byte* buffer, std::size_t count);
-    void readALl(Byte* buffer, std::size_t count);
-    std::size_t writeSome(const Byte* buffer, std::size_t count);
-    void writeAll(const Byte* buffer, std::size_t count);
+    std::size_t readSome(void* buffer, std::size_t count);
+    void readAll(void* buffer, std::size_t count);
+    std::size_t writeSome(const void* buffer, std::size_t count);
+    void writeAll(const void* buffer, std::size_t count);
     
     EndpointType getRemoteEndpoint();
     

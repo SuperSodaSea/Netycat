@@ -97,38 +97,40 @@ void TCPSocket::close() {
     
 }
 
-std::size_t TCPSocket::readSome(Byte* buffer, std::size_t count) {
+std::size_t TCPSocket::readSome(void* buffer, std::size_t count) {
     
     // TODO: The "count" argument is int on Windows, but size_t on Linux
-    std::ptrdiff_t ret = ::recv(socket, reinterpret_cast<char*>(buffer), int(count), 0);
+    std::ptrdiff_t ret = ::recv(socket, static_cast<char*>(buffer), int(count), 0);
     if(ret < 0) throw Corecat::SystemException("::recv failed");
     return ret;
     
 }
-void TCPSocket::readALl(Byte* buffer, std::size_t count) {
+void TCPSocket::readAll(void* buffer, std::size_t count) {
     
+    auto p = static_cast<Byte*>(buffer);
     while(count > 0) {
         
-        std::size_t ret = readSome(buffer, count);
-        buffer += ret, count -= ret;
+        std::size_t ret = readSome(p, count);
+        p += ret, count -= ret;
         
     }
     
 }
 
-std::size_t TCPSocket::writeSome(const Byte* buffer, std::size_t count) {
+std::size_t TCPSocket::writeSome(const void* buffer, std::size_t count) {
     
-    std::ptrdiff_t ret = ::send(socket, reinterpret_cast<const char*>(buffer), int(count), 0);
+    std::ptrdiff_t ret = ::send(socket, static_cast<const char*>(buffer), int(count), 0);
     if(ret < 0) throw Corecat::SystemException("::send failed");
     return ret;
     
 }
-void TCPSocket::writeAll(const Byte* buffer, std::size_t count) {
+void TCPSocket::writeAll(const void* buffer, std::size_t count) {
     
+    auto p = static_cast<const Byte*>(buffer);
     while(count > 0) {
         
-        std::size_t ret = writeSome(buffer, count);
-        buffer += ret, count -= ret;
+        std::size_t ret = writeSome(p, count);
+        p += ret, count -= ret;
         
     }
     
