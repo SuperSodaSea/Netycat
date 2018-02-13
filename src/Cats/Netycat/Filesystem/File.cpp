@@ -60,9 +60,9 @@ File::File(const FilePath& path, Mode mode) {
     
     DWORD attribute = FILE_ATTRIBUTE_NORMAL;
     
-    if(!(handle = CreateFileW(path.getData(), access, share, nullptr, disposition, attribute, nullptr))) {
+    if(!(handle = ::CreateFileW(path.getData(), access, share, nullptr, disposition, attribute, nullptr))) {
         
-        throw Corecat::IOException("CreateFileW failed");
+        throw Corecat::IOException("::CreateFileW failed");
         
     }
     
@@ -78,9 +78,9 @@ void File::read(Byte* buffer, std::size_t count, std::uint64_t offset) {
     overlapped.Offset = DWORD(offset);
     overlapped.OffsetHigh = offset >> 32;
     DWORD byteCount;
-    if(!ReadFile(handle, buffer, DWORD(count), &byteCount, &overlapped)) {
+    if(!::ReadFile(handle, buffer, DWORD(count), &byteCount, &overlapped)) {
         
-        throw Corecat::IOException("ReadFile failed");
+        throw Corecat::IOException("::ReadFile failed");
         
     }
     
@@ -93,18 +93,18 @@ void File::write(const Byte* buffer, std::size_t count, std::uint64_t offset) {
     overlapped.Offset = DWORD(offset);
     overlapped.OffsetHigh = offset >> 32;
     DWORD byteCount;
-    if(!WriteFile(handle, buffer, DWORD(count), &byteCount, &overlapped)) {
+    if(!::WriteFile(handle, buffer, DWORD(count), &byteCount, &overlapped)) {
         
-        throw Corecat::IOException("WriteFile failed");
+        throw Corecat::IOException("::WriteFile failed");
         
     }
     
 }
 void File::flush() {
     
-    if(!FlushFileBuffers(handle)) {
+    if(!::FlushFileBuffers(handle)) {
         
-        throw Corecat::IOException("FlushFileBuffers failed");
+        throw Corecat::IOException("::FlushFileBuffers failed");
         
     }
     
@@ -114,9 +114,9 @@ std::uint64_t File::getSize() {
     assert(handle);
     
     LARGE_INTEGER s;
-    if(!GetFileSizeEx(handle, &s)) {
+    if(!::GetFileSizeEx(handle, &s)) {
         
-        throw Corecat::IOException("GetFileSizeEx failed");
+        throw Corecat::IOException("::GetFileSizeEx failed");
         
     }
     return s.QuadPart;
@@ -128,16 +128,10 @@ void File::setSize(std::uint64_t size) {
     
     LARGE_INTEGER s;
     s.QuadPart = size;
-    if(!SetFilePointerEx(handle, s, nullptr, FILE_BEGIN)) {
-        
-        throw Corecat::IOException("SetFilePointerEx failed");
-        
-    }
-    if(!SetEndOfFile(handle)) {
-        
-        throw Corecat::IOException("SetEndOfFile failed");
-        
-    }
+    if(!::SetFilePointerEx(handle, s, nullptr, FILE_BEGIN))
+        throw Corecat::IOException("::SetFilePointerEx failed");
+    if(!::SetEndOfFile(handle))
+        throw Corecat::IOException("::SetEndOfFile failed");
     
 }
 

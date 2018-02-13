@@ -33,18 +33,18 @@ namespace Cats {
 namespace Netycat {
 inline namespace Filesystem {
 
-void Directory::Iterator::FindDeleter::operator ()(HANDLE handle) const noexcept { FindClose(handle); }
+void Directory::Iterator::FindDeleter::operator ()(HANDLE handle) const noexcept { ::FindClose(handle); }
 
 Directory::Iterator::Iterator(const FilePath& path_) : path(path_) {
     
     auto str = path.getString();
     str += str.isEmpty() || (!str.endsWith(L'\\') && !str.endsWith(L'/') && !str.endsWith(L':')) ? L"\\*" : L"*";
     WIN32_FIND_DATAW data;
-    auto handle_ = FindFirstFileW(str.getData(), &data);
+    auto handle_ = ::FindFirstFileW(str.getData(), &data);
     if(handle_ == INVALID_HANDLE_VALUE) {
         
         if(GetLastError() == ERROR_FILE_NOT_FOUND) { handle = nullptr; return; }
-        throw Corecat::SystemException("FindFirstFileW failed");
+        throw Corecat::SystemException("::FindFirstFileW failed");
         
     }
     handle = {handle_, FindDeleter()};
@@ -59,10 +59,10 @@ Directory::Iterator& Directory::Iterator::operator ++() {
     while(true) {
         
         WIN32_FIND_DATAW data;
-        if(!FindNextFileW(handle.get(), &data)) {
+        if(!::FindNextFileW(handle.get(), &data)) {
             
             if(GetLastError() == ERROR_NO_MORE_FILES) { handle = nullptr; break; }
-            else throw Corecat::SystemException("FindNextFileW failed");
+            else throw Corecat::SystemException("::FindNextFileW failed");
             
         }
         name = reinterpret_cast<char16_t*>(data.cFileName);

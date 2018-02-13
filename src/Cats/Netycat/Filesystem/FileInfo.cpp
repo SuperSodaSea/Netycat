@@ -35,11 +35,11 @@ inline namespace Filesystem {
 
 FileType FileInfo::getType(const FilePath& path) {
     
-    DWORD attribute = GetFileAttributesW(path.getData());
+    DWORD attribute = ::GetFileAttributesW(path.getData());
     if(attribute == INVALID_FILE_ATTRIBUTES) {
         
         if(GetLastError() == ERROR_FILE_NOT_FOUND) return FileType::NOT_FOUND;
-        else throw Corecat::SystemException("GetFileAttributesW failed");
+        else throw Corecat::SystemException("::GetFileAttributesW failed");
         
     }
     if(attribute & FILE_ATTRIBUTE_DIRECTORY) return FileType::DIRECTORY;
@@ -50,8 +50,8 @@ FileType FileInfo::getType(const FilePath& path) {
 std::uint64_t FileInfo::getSize(const FilePath& path) {
     
     WIN32_FILE_ATTRIBUTE_DATA data;
-    if(!GetFileAttributesExW(path.getData(), GetFileExInfoStandard, &data))
-        throw Corecat::SystemException("GetFileAttributesExW failed");
+    if(!::GetFileAttributesExW(path.getData(), GetFileExInfoStandard, &data))
+        throw Corecat::SystemException("::GetFileAttributesExW failed");
     return (std::uint64_t(data.nFileSizeHigh) << 32) | data.nFileSizeLow;
     
 }
@@ -59,8 +59,8 @@ std::uint64_t FileInfo::getSize(const FilePath& path) {
 SpaceInfo FileInfo::getSpace(const FilePath& path) {
     
     ULARGE_INTEGER capacity, free, available;
-    if(!GetDiskFreeSpaceExW(path.getData(), &available, &capacity, &free))
-        throw Corecat::SystemException("GetDiskFreeSpaceEx failed");
+    if(!::GetDiskFreeSpaceExW(path.getData(), &available, &capacity, &free))
+        throw Corecat::SystemException("::GetDiskFreeSpaceEx failed");
     SpaceInfo space;
     space.capacity = capacity.QuadPart;
     space.free = free.QuadPart;

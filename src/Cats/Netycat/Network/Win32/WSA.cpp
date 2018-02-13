@@ -42,9 +42,9 @@ private:
     
 public:
     
-    WSA() { WSAStartup(MAKEWORD(2, 2), &wsaData); }
+    WSA() { ::WSAStartup(MAKEWORD(2, 2), &wsaData); }
     WSA(const WSA& src) = delete;
-    ~WSA() { WSACleanup(); }
+    ~WSA() { ::WSACleanup(); }
     
     WSA& operator =(const WSA& src) = delete;
     

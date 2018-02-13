@@ -51,8 +51,8 @@ std::vector<IPAddress> SystemIPResolver::resolve(const String8& name) {
     hints.ai_flags = AI_PASSIVE;
     hints.ai_family = AF_UNSPEC;
     int errcode;
-    if((errcode = getaddrinfo(name.getData(), nullptr, &hints, &result)))
-        throw Corecat::IOException("getaddrinfo failed");
+    if((errcode = ::getaddrinfo(name.getData(), nullptr, &hints, &result)))
+        throw Corecat::IOException("::getaddrinfo failed");
     std::size_t count = 0;
     for(addrinfo* cur = result; cur != nullptr; cur = cur->ai_next) ++count;
     std::vector<IPAddress> addressList;
@@ -78,7 +78,7 @@ std::vector<IPAddress> SystemIPResolver::resolve(const String8& name) {
         }
         
     }
-    freeaddrinfo(result);
+    ::freeaddrinfo(result);
     if(addressList.empty()) throw Corecat::IOException("Unable to resolve hostname");
     return addressList;
     
