@@ -49,9 +49,9 @@ private:
     
 public:
     
-#if defined(CATS_CORECAT_SYSTEM_OS_WINDOWS)
+#if defined(CORECAT_OS_WINDOWS)
     using CharsetType = Corecat::WideCharset<>;
-#elif defined(CATS_CORECAT_SYSTEM_OS_LINUX) || defined(CATS_CORECAT_SYSTEM_OS_MACOS)
+#elif defined(CORECAT_OS_LINUX) || defined(CORECAT_OS_MACOS)
     using CharsetType = Corecat::UTF8Charset<>;
 #else
 #   error Unknown OS
@@ -66,16 +66,16 @@ public:
     
 public:
     
-#if defined(CATS_CORECAT_SYSTEM_OS_WINDOWS)
+#if defined(CORECAT_OS_WINDOWS)
     static constexpr wchar_t SEPARATOR = L'\\';
-#elif defined(CATS_CORECAT_SYSTEM_OS_LINUX) || defined(CATS_CORECAT_SYSTEM_OS_MACOS)
+#elif defined(CORECAT_OS_LINUX) || defined(CORECAT_OS_MACOS)
     static constexpr char SEPARATOR = '/';
 #endif
 
     constexpr static bool isSeparator(CharType c) {
-#if defined(CATS_CORECAT_SYSTEM_OS_WINDOWS)
+#if defined(CORECAT_OS_WINDOWS)
         return c == L'/' || c == L'\\';
-#elif defined(CATS_CORECAT_SYSTEM_OS_LINUX) || defined(CATS_CORECAT_SYSTEM_OS_MACOS)
+#elif defined(CORECAT_OS_LINUX) || defined(CORECAT_OS_MACOS)
         return c == '/';
 #endif
     }
@@ -94,7 +94,7 @@ private:
         auto b = data.begin(), e = data.end();
         
         // Root length
-#if defined(CATS_CORECAT_SYSTEM_OS_WINDOWS)
+#if defined(CORECAT_OS_WINDOWS)
         if(data.getLength() >= 2 && ((data[0] >= L'A' && data[0] <= L'Z') || (data[0] >= L'a' && data[0] <= L'z')) && data[1] == L':')
             rootLength = 2;
 #endif
@@ -163,9 +163,9 @@ public:
     bool hasFilename() const noexcept { return filenameLength; }
     
     bool isAbsolute() const noexcept {
-#if defined(CATS_CORECAT_SYSTEM_OS_WINDOWS)
+#if defined(CORECAT_OS_WINDOWS)
         return hasRoot() && hasRootDirectory();
-#elif defined(CATS_CORECAT_SYSTEM_OS_LINUX) || defined(CATS_CORECAT_SYSTEM_OS_MACOS)
+#elif defined(CORECAT_OS_LINUX) || defined(CORECAT_OS_MACOS)
         return hasRootDirectory();
 #endif
     }
