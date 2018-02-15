@@ -28,8 +28,7 @@
 #include <thread>
 
 #include "Cats/Corecat/Util.hpp"
-#include "Cats/Netycat/Network/IP.hpp"
-#include "Cats/Netycat/Network/TCP.hpp"
+#include "Cats/Netycat/Network.hpp"
 
 
 using namespace Cats::Corecat;
@@ -44,6 +43,7 @@ void server() {
     server.accept(socket);
     const char data[] = "Hello, Netycat!";
     std::uint8_t size = sizeof(data) - 1;
+    (std::cout << "Server write: ").write(data, size) << std::endl;
     socket.writeAll(&size, 1);
     socket.writeAll(data, size);
     
@@ -57,8 +57,7 @@ void client() {
     char buffer[256];
     socket.readAll(&size, 1);
     socket.readAll(buffer, size);
-    
-    std::cout.write(buffer, size) << std::endl;
+    (std::cout << "Client read: ").write(buffer, size) << std::endl;
     
 }
 

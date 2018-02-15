@@ -29,6 +29,7 @@
 
 
 #include "Network/IP.hpp"
+#include "Network/TCP.hpp"
 
 
 #endif
