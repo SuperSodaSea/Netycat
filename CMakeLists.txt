@@ -18,6 +18,7 @@ endif()
 
 include_directories("include")
 
+aux_source_directory("src/Cats/Netycat" SRC)
 aux_source_directory("src/Cats/Netycat/Filesystem" SRC)
 aux_source_directory("src/Cats/Netycat/Network/IP" SRC)
 aux_source_directory("src/Cats/Netycat/Network/TCP" SRC)

@@ -33,7 +33,12 @@
 #include "Cats/Corecat/Util/Exception.hpp"
 #include "Cats/Corecat/Util/Iterator.hpp"
 #include "Cats/Corecat/Util/Operator.hpp"
-#include "Cats/Corecat/Win32/Windows.hpp"
+
+#if defined(CORECAT_OS_WINDOWS)
+#   include "Cats/Corecat/Win32/Windows.hpp"
+#else
+#   error Unknown OS
+#endif
 
 
 namespace Cats {
@@ -53,8 +58,6 @@ public:
     using CharsetType = Corecat::WideCharset<>;
 #elif defined(CORECAT_OS_LINUX) || defined(CORECAT_OS_MACOS)
     using CharsetType = Corecat::UTF8Charset<>;
-#else
-#   error Unknown OS
 #endif
     
     using CharType = CharsetType::CharType;
@@ -187,12 +190,12 @@ public:
     
     static FilePath getCurrent() {
         
-        DWORD size = GetCurrentDirectoryW(0, nullptr);
-        if(!size) throw Corecat::SystemException("GetCurrentDirectoryW failed");
+        DWORD size = ::GetCurrentDirectoryW(0, nullptr);
+        if(!size) throw Corecat::SystemException("::GetCurrentDirectoryW failed");
         Corecat::WString data;
         data.setLength(size);
-        if(!GetCurrentDirectoryW(size, data.getData()))
-            throw Corecat::SystemException("GetCurrentDirectoryW failed");
+        if(!::GetCurrentDirectoryW(size, data.getData()))
+            throw Corecat::SystemException("::GetCurrentDirectoryW failed");
         return data;
         
     }

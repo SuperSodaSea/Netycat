@@ -69,8 +69,6 @@ File::File(const FilePath& path, Mode mode) {
 }
 void File::read(Byte* buffer, std::size_t count, std::uint64_t offset) {
     
-    assert(handle);
-    
     if(offset + count > getSize())
         throw Corecat::IOException("End of file");
     
@@ -86,8 +84,6 @@ void File::read(Byte* buffer, std::size_t count, std::uint64_t offset) {
     
 }
 void File::write(const Byte* buffer, std::size_t count, std::uint64_t offset) {
-    
-    assert(handle);
     
     OVERLAPPED overlapped = {};
     overlapped.Offset = DWORD(offset);
@@ -111,8 +107,6 @@ void File::flush() {
 }
 std::uint64_t File::getSize() {
     
-    assert(handle);
-    
     LARGE_INTEGER s;
     if(!::GetFileSizeEx(handle, &s)) {
         
@@ -123,8 +117,6 @@ std::uint64_t File::getSize() {
     
 }
 void File::setSize(std::uint64_t size) {
-    
-    assert(handle);
     
     LARGE_INTEGER s;
     s.QuadPart = size;
