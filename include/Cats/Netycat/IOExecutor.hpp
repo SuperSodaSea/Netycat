@@ -31,8 +31,10 @@
 #include <cstddef>
 
 #include <atomic>
+#include <functional>
 
 #include "Cats/Corecat/System/OS.hpp"
+#include "Cats/Corecat/Util/ExceptionWrapper.hpp"
 
 #if defined(CORECAT_OS_WINDOWS)
 #   include "Cats/Corecat/Win32/Handle.hpp"
@@ -50,13 +52,12 @@ class IOExecutor {
 #if defined(NETYCAT_IOEXECUTOR_IOCP)
 public:
     
-    using OverlappedCallback = void(*)(bool, std::size_t, void*);
+    using OverlappedCallback = std::function<void(const Corecat::ExceptionWrapper&, std::size_t)>;
     struct Overlapped : public OVERLAPPED {
         
         OverlappedCallback cb;
-        void* data;
         
-        Overlapped(OverlappedCallback cb_, void* data_) : OVERLAPPED(), cb(cb_), data(data_) {}
+        Overlapped(OverlappedCallback cb_) : OVERLAPPED(), cb(std::move(cb_)) {}
         Overlapped(const Overlapped& src) = delete;
         
         Overlapped& operator =(const Overlapped& src) = delete;
@@ -66,7 +67,7 @@ public:
 private:
     
     Corecat::Handle completionPort;
-    std::atomic<size_t> overlappedCount;
+    std::atomic<size_t> overlappedCount{};
 #endif
     
 public:
@@ -81,7 +82,7 @@ public:
     
 #if defined(NETYCAT_IOEXECUTOR_IOCP)
     void attachHandle(HANDLE handle);
-    Overlapped* createOverlapped(OverlappedCallback cb, void* data);
+    Overlapped* createOverlapped(OverlappedCallback cb);
     void destroyOverlapped(Overlapped* overlapped);
 #endif
     

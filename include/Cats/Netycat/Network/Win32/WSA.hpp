@@ -30,6 +30,7 @@
 
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include <mswsock.h>
 
 
 namespace Cats {
@@ -37,7 +38,32 @@ namespace Netycat {
 inline namespace Network {
 inline namespace Win32 {
 
-void initWSA();
+class WSA {
+    
+private:
+    
+    WSADATA wsaData;
+    
+public:
+    
+    static void getExtensionFunction(SOCKET socket, GUID guid, void** p);
+    static LPFN_ACCEPTEX AcceptEx;
+    static LPFN_CONNECTEX ConnectEx;
+    
+private:
+    
+    WSA();
+    WSA(const WSA& src) = delete;
+    ~WSA();
+    
+    WSA& operator =(const WSA& src) = delete;
+    
+public:
+    
+    static void init();
+    const WSADATA& getData();
+    
+};
 
 }
 }

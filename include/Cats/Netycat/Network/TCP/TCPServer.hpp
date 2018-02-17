@@ -47,23 +47,31 @@ public:
     using NativeHandleType = SOCKET;
     using EndpointType = TCPEndpoint;
     
+    using AcceptCallback = std::function<void(const Corecat::ExceptionWrapper&)>;
+    
 private:
     
+    IOExecutor* executor = nullptr;
     NativeHandleType socket = 0;
+    IPAddress::Type type;
     
 public:
     
     TCPServer();
-    TCPServer(NativeHandleType socket_) : socket(socket_) {}
+    TCPServer(IOExecutor& executor_);
+    TCPServer(NativeHandleType socket_);
+    TCPServer(IOExecutor& executor_, NativeHandleType socket_);
     TCPServer(const TCPServer& src) = delete;
-    TCPServer(TCPServer&& src) : socket(src.socket) { src.socket = 0; }
+    TCPServer(TCPServer&& src) : executor(src.executor), socket(src.socket) { src.socket = 0; }
     ~TCPServer();
     
     TCPServer& operator =(const TCPServer& src) = delete;
-    TCPServer& operator =(TCPServer&& src) { if(socket) close(); socket = src.socket, src.socket = 0; return *this; }
+    TCPServer& operator =(TCPServer&& src) { if(socket) close(); executor = src.executor, socket = src.socket, src.socket = 0; return *this; }
     
     void listen(EndpointType endpoint, std::size_t backlog = 128);
     void accept(TCPSocket& s);
+    void accept(TCPSocket& s, AcceptCallback cb);
+    Corecat::Promise<> acceptAsync(TCPSocket& s);
     void close();
     
 };

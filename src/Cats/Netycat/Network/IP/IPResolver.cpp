@@ -39,7 +39,7 @@ inline namespace IP {
 
 SystemIPResolver::SystemIPResolver() {
     
-    initWSA();
+    WSA::init();
     
 }
 

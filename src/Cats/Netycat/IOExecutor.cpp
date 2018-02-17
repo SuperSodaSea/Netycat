@@ -42,16 +42,18 @@ IOExecutor::~IOExecutor() {}
 
 void IOExecutor::run() {
 #if defined(NETYCAT_IOEXECUTOR_IOCP)
-    while(true) {
+    while(overlappedCount) {
         
         DWORD byteCount;
         ULONG_PTR completionKey;
         OVERLAPPED* o = nullptr;
-        bool success = GetQueuedCompletionStatus(completionPort, &byteCount, &completionKey, &o, INFINITE);
+        bool success = ::GetQueuedCompletionStatus(completionPort, &byteCount, &completionKey, &o, INFINITE);
         if(o) {
             
+            Corecat::ExceptionWrapper e;
+            if(!success) e = Corecat::IOException("::GetQueuedCompletionStatus failed");
             Overlapped* overlapped = static_cast<Overlapped*>(o);
-            overlapped->cb(success, byteCount, 0);
+            overlapped->cb(e, byteCount);
             destroyOverlapped(overlapped);
             
         }
@@ -67,9 +69,9 @@ void IOExecutor::attachHandle(HANDLE handle) {
         throw Corecat::IOException("::CreateIoCompletionPort failed");
     
 }
-IOExecutor::Overlapped* IOExecutor::createOverlapped(OverlappedCallback cb, void* data) {
+IOExecutor::Overlapped* IOExecutor::createOverlapped(OverlappedCallback cb) {
     
-    Overlapped* overlapped = new Overlapped(cb, data);
+    Overlapped* overlapped = new Overlapped(std::move(cb));
     ++overlappedCount;
     return overlapped;
     

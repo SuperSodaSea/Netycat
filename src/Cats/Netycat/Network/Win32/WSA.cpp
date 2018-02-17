@@ -32,33 +32,34 @@ namespace Netycat {
 inline namespace Network {
 inline namespace Win32 {
 
-namespace Impl {
-
-class WSA {
+void WSA::getExtensionFunction(SOCKET socket, GUID guid, void** p) {
     
-private:
-    
-    WSADATA wsaData;
-    
-public:
-    
-    WSA() { ::WSAStartup(MAKEWORD(2, 2), &wsaData); }
-    WSA(const WSA& src) = delete;
-    ~WSA() { ::WSACleanup(); }
-    
-    WSA& operator =(const WSA& src) = delete;
-    
-    const WSADATA& getWSAData() { return wsaData; }
-    
-};
-
-}
-
-void initWSA() {
-    
-    static Impl::WSA wsa;
+    DWORD byteCount;
+    if(WSAIoctl(socket, SIO_GET_EXTENSION_FUNCTION_POINTER, &guid, sizeof(guid), p, sizeof(*p), &byteCount, nullptr, nullptr))
+        *p = nullptr;
     
 }
+LPFN_ACCEPTEX WSA::AcceptEx = nullptr;
+LPFN_CONNECTEX WSA::ConnectEx = nullptr;
+
+WSA::WSA() {
+    
+    ::WSAStartup(MAKEWORD(2, 2), &wsaData);
+    
+    SOCKET socket = ::socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if(socket) {
+        
+        getExtensionFunction(socket, WSAID_ACCEPTEX, reinterpret_cast<void**>(&AcceptEx));
+        getExtensionFunction(socket, WSAID_CONNECTEX, reinterpret_cast<void**>(&ConnectEx));
+        ::closesocket(socket);
+        
+    }
+    
+}
+WSA::~WSA() { ::WSACleanup(); }
+
+void WSA::init() { static WSA wsa; }
+const WSADATA& WSA::getData() { return wsaData; }
 
 }
 }

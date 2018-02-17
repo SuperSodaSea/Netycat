@@ -35,7 +35,7 @@ using namespace Cats::Corecat;
 using namespace Cats::Netycat;
 
 
-void server() {
+void runServer() {
     
     TCPServer server;
     server.listen({IPv4Address::getAny(), 12345});
@@ -49,7 +49,7 @@ void server() {
     
 }
 
-void client() {
+void runClient() {
     
     TCPSocket socket;
     socket.connect({IPv4Address::getLoopback(), 12345});
@@ -66,8 +66,8 @@ int main() {
     
     try {
         
-        std::thread serverThread(server);
-        std::thread clientThread(client);
+        std::thread serverThread(runServer);
+        std::thread clientThread(runClient);
         serverThread.join();
         clientThread.join();
         

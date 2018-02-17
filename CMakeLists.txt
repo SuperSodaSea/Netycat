@@ -34,6 +34,7 @@ set(EXAMPLE
     Filesystem_File
     Filesystem_MappedFile
     Network_IPResolver
+    Network_TCPSocketAsync
     Network_TCPSocketSync)
 
 foreach(example ${EXAMPLE})

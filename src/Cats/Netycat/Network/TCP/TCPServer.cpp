@@ -37,9 +37,16 @@ inline namespace TCP {
 
 TCPServer::TCPServer() {
     
-    initWSA();
+    WSA::init();
     
 }
+TCPServer::TCPServer(IOExecutor& executor_) : executor(&executor_) {
+    
+    WSA::init();
+    
+}
+TCPServer::TCPServer(NativeHandleType socket_) : socket(socket_) {}
+TCPServer::TCPServer(IOExecutor& executor_, NativeHandleType socket_) : executor(&executor_), socket(socket_) {}
 TCPServer::~TCPServer() {
     
     if(socket) close();
@@ -54,7 +61,7 @@ void TCPServer::listen(TCPEndpoint endpoint, std::size_t backlog) {
     case IPAddress::Type::IPv4: {
         
         sock = ::socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-        if(sock == INVALID_SOCKET) throw Corecat::SystemException("::socket failed");
+        if(sock == INVALID_SOCKET) throw Corecat::IOException("::socket failed");
         std::uint32_t addr = endpoint.getAddress().getIPv4();
         std::uint16_t port = endpoint.getPort();
         sockaddr_in* saddr4 = reinterpret_cast<sockaddr_in*>(&saddr);
@@ -67,7 +74,7 @@ void TCPServer::listen(TCPEndpoint endpoint, std::size_t backlog) {
     case IPAddress::Type::IPv6: {
         
         sock = ::socket(PF_INET6, SOCK_STREAM, IPPROTO_TCP);
-        if(sock == INVALID_SOCKET) throw Corecat::SystemException("::socket failed");
+        if(sock == INVALID_SOCKET) throw Corecat::IOException("::socket failed");
         const std::uint8_t* addr = endpoint.getAddress().getIPv6().getData();
         std::uint32_t scope = endpoint.getAddress().getIPv6().getScope();
         std::uint16_t port = endpoint.getPort();
@@ -79,21 +86,23 @@ void TCPServer::listen(TCPEndpoint endpoint, std::size_t backlog) {
         break;
         
     }
-    default: throw Corecat::InvalidArgumentException("Invalid endpoint");
+    default: throw Corecat::InvalidArgumentException("Invalid endpoint type");
     }
     if(::bind(sock, reinterpret_cast<sockaddr*>(&saddr), sizeof(saddr))) {
         
         ::closesocket(sock);
-        throw Corecat::SystemException("::bind failed");
+        throw Corecat::IOException("::bind failed");
         
     }
     if(::listen(sock, int(backlog))) {
         
         ::closesocket(sock);
-        throw Corecat::SystemException("::listen failed");
+        throw Corecat::IOException("::listen failed");
         
     }
     socket = sock;
+    type = endpoint.getAddress().getType();
+    if(executor) executor->attachHandle(HANDLE(socket));
     
 }
 void TCPServer::accept(TCPSocket& s) {
@@ -101,8 +110,57 @@ void TCPServer::accept(TCPSocket& s) {
     sockaddr_storage saddr;
     int saddrSize = sizeof(saddr);
     SOCKET sock = ::accept(socket, reinterpret_cast<sockaddr*>(&saddr), &saddrSize);
-    if(sock == INVALID_SOCKET) throw Corecat::SystemException("::accept failed");
+    if(sock == INVALID_SOCKET) throw Corecat::IOException("::accept failed");
     s = {sock};
+    
+}
+void TCPServer::accept(TCPSocket& s, AcceptCallback cb) {
+    
+    SOCKET sock;
+    switch(type) {
+    case IPAddress::Type::IPv4: {
+        
+        sock = ::socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+        if(sock == INVALID_SOCKET) { cb(Corecat::IOException("::socket failed")); return; }
+        break;
+        
+    }
+    case IPAddress::Type::IPv6: {
+        
+        sock = ::socket(PF_INET6, SOCK_STREAM, IPPROTO_TCP);
+        if(sock == INVALID_SOCKET) { cb(Corecat::IOException("::socket failed")); return; }
+        break;
+        
+    }
+    default: cb(Corecat::InvalidArgumentException("Invalid endpoint type")); return;
+    }
+    auto buffer = new Corecat::Byte[(sizeof(sockaddr_storage) + 16) * 2];
+    auto overlapped = executor->createOverlapped([=, &s](auto& e, auto) {
+        
+        delete[] buffer;
+        if(e) ::closesocket(sock);
+        else s = {*executor, sock};
+        cb(e);
+        
+    });
+    if(!WSA::AcceptEx(socket, sock, buffer, 0, sizeof(sockaddr_storage) + 16, sizeof(sockaddr_storage) + 16, nullptr, overlapped)
+        && ::GetLastError() != ERROR_IO_PENDING) {
+        
+        delete[] buffer;
+        executor->destroyOverlapped(overlapped);
+        ::closesocket(sock);
+        cb(Corecat::IOException("::AccpetEx failed"));
+        
+    }
+    
+}
+Corecat::Promise<> TCPServer::acceptAsync(TCPSocket& s) {
+    
+    Corecat::Promise<> promise;
+    accept(s, [=](auto& e) {
+        e ? promise.reject(e) : promise.resolve();
+    });
+    return promise;
     
 }
 void TCPServer::close() {

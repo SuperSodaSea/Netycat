@@ -30,7 +30,9 @@
 
 #include "TCPEndpoint.hpp"
 
+#include "Cats/Corecat/Concurrent/Promise.hpp"
 #include "Cats/Corecat/Util/Byte.hpp"
+#include "Cats/Netycat/IOExecutor.hpp"
 
 #include <winsock2.h>
 
@@ -51,30 +53,53 @@ public:
     using NativeHandleType = SOCKET;
     using EndpointType = TCPEndpoint;
     
+    using ConnectCallback = std::function<void(const Corecat::ExceptionWrapper&)>;
+    using ReadCallback = std::function<void(const Corecat::ExceptionWrapper&, std::size_t)>;
+    using WriteCallback = std::function<void(const Corecat::ExceptionWrapper&, std::size_t)>;
+    
 private:
     
+    IOExecutor* executor = nullptr;
     NativeHandleType socket = 0;
     
 public:
     
     TCPSocket();
-    TCPSocket(NativeHandleType socket_) : socket(socket_) {}
+    TCPSocket(IOExecutor& executor_);
+    TCPSocket(NativeHandleType socket_);
+    TCPSocket(IOExecutor& executor_, NativeHandleType socket_);
     TCPSocket(const TCPSocket& src) = delete;
-    TCPSocket(TCPSocket&& src) : socket(src.socket) { src.socket = 0; }
+    TCPSocket(TCPSocket&& src) : executor(src.executor), socket(src.socket) { src.socket = 0; }
     ~TCPSocket();
     
     TCPSocket& operator =(const TCPSocket& src) = delete;
-    TCPSocket& operator =(TCPSocket&& src) { if(socket) close(); socket = src.socket, src.socket = 0; return *this; }
+    TCPSocket& operator =(TCPSocket&& src) { if(socket) close(); executor = src.executor, socket = src.socket, src.socket = 0; return *this; }
     
     void connect(const EndpointType& endpoint);
+    void connect(const EndpointType& endpoint, ConnectCallback cb);
+    Corecat::Promise<> connectAsync(const EndpointType& endpoint);
     void close();
     
     std::size_t readSome(void* buffer, std::size_t count);
-    void readAll(void* buffer, std::size_t count);
+    void readSome(void* buffer, std::size_t count, ReadCallback cb);
+    Corecat::Promise<std::size_t> readSomeAsync(void* buffer, std::size_t count);
+    std::size_t readAll(void* buffer, std::size_t count);
+    void readAll(void* buffer, std::size_t count, ReadCallback cb);
+    Corecat::Promise<std::size_t> readAllAsync(void* buffer, std::size_t count);
+    
     std::size_t writeSome(const void* buffer, std::size_t count);
-    void writeAll(const void* buffer, std::size_t count);
+    void writeSome(const void* buffer, std::size_t count, WriteCallback cb);
+    Corecat::Promise<std::size_t> writeSomeAsync(const void* buffer, std::size_t count);
+    std::size_t writeAll(const void* buffer, std::size_t count);
+    void writeAll(const void* buffer, std::size_t count, WriteCallback cb);
+    Corecat::Promise<std::size_t> writeAllAsync(const void* buffer, std::size_t count);
     
     EndpointType getRemoteEndpoint();
+    
+private:
+    
+    void readAllImpl(Byte* buffer, std::size_t n, ReadCallback cb, std::size_t count);
+    void writeAllImpl(const Byte* buffer, std::size_t n, WriteCallback cb, std::size_t count);
     
 };
 
