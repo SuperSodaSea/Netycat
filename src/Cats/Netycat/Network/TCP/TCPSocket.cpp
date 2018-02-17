@@ -226,7 +226,7 @@ Corecat::Promise<std::size_t> TCPSocket::readSomeAsync(void* buffer, std::size_t
 std::size_t TCPSocket::readAll(void* buffer, std::size_t count) {
     
     auto p = static_cast<Byte*>(buffer);
-    for(auto n = count; count; ) {
+    for(auto n = count; n; ) {
         
         std::size_t ret = readSome(p, n);
         p += ret, n -= ret;
@@ -297,7 +297,7 @@ Corecat::Promise<std::size_t> TCPSocket::writeSomeAsync(const void* buffer, std:
 std::size_t TCPSocket::writeAll(const void* buffer, std::size_t count) {
     
     auto p = static_cast<const Byte*>(buffer);
-    for(auto n = count; count; ) {
+    for(auto n = count; n; ) {
         
         std::size_t ret = writeSome(p, n);
         p += ret, n -= ret;
