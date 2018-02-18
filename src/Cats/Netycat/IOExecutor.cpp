@@ -40,6 +40,18 @@ IOExecutor::IOExecutor() {
 }
 IOExecutor::~IOExecutor() {}
 
+void IOExecutor::execute(std::function<void()> f) {
+#if defined(NETYCAT_IOEXECUTOR_IOCP)
+    auto overlapped = createOverlapped([f = std::move(f)](auto&, auto) { f(); });
+    if(!::PostQueuedCompletionStatus(completionPort, 0, 0, overlapped)) {
+        
+        destroyOverlapped(overlapped);
+        throw Corecat::IOException("::PostQueuedCompletionStatus failed");
+        
+    }
+#endif
+}
+
 void IOExecutor::run() {
 #if defined(NETYCAT_IOEXECUTOR_IOCP)
     while(overlappedCount) {

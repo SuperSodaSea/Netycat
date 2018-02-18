@@ -62,11 +62,7 @@ void runServer(IOExecutor& executor) {
             
             return session->socket.writeAllAsync(session->buffer, session->size);
             
-        }).fail([server, session](auto e) {
-            
-            e.with([](const std::exception& e) { std::cerr << e.what() << std::endl; });
-            
-        });
+        }).fail([server, session](auto& e) { e.with([](const std::exception& e) { std::cerr << e.what() << std::endl; }); });
     
 }
 
@@ -95,11 +91,7 @@ void runClient(IOExecutor& executor) {
             
             (std::cout << "Client read: ").write(session->buffer, session->size) << std::endl;
             
-        }).fail([session](auto e) {
-            
-            e.with([](const std::exception& e) { std::cerr << e.what() << std::endl; });
-            
-        });
+        }).fail([session](auto& e) { e.with([](const std::exception& e) { std::cerr << e.what() << std::endl; }); });
     
 }
 

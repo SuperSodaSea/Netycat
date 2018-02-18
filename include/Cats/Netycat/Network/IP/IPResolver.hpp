@@ -31,6 +31,9 @@
 #include <vector>
 
 #include "IPAddress.hpp"
+#include "../../IOExecutor.hpp"
+
+#include "Cats/Corecat/Concurrent/Promise.hpp"
 
 
 namespace Cats {
@@ -46,14 +49,24 @@ private:
     
 public:
     
+    using ResolveCallback = std::function<void(const Corecat::ExceptionWrapper&, std::vector<IPAddress>)>;
+    
+private:
+    
+    IOExecutor* executor = nullptr;
+    
+public:
+    
     SystemIPResolver();
+    SystemIPResolver(IOExecutor& executor_);
     SystemIPResolver(const SystemIPResolver& src) = delete;
-    SystemIPResolver(SystemIPResolver&& src) = default;
     
     SystemIPResolver& operator =(const SystemIPResolver& src) = delete;
-    SystemIPResolver& operator =(SystemIPResolver&& src) = default;
     
     std::vector<IPAddress> resolve(const String8& name);
+    std::vector<IPAddress> resolve(const String8& name, Corecat::ExceptionWrapper& e);
+    void resolve(const String8& name, ResolveCallback cb);
+    Corecat::Promise<std::vector<IPAddress>> resolveAsync(const String8& name);
     
 };
 

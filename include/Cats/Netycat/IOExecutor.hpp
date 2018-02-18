@@ -78,6 +78,10 @@ public:
     
     IOExecutor& operator =(const IOExecutor& src) = delete;
     
+    void execute(std::function<void()> f);
+    void beginWork() { ++overlappedCount; }
+    void endWork() { --overlappedCount; }
+    
     void run();
     
 #if defined(NETYCAT_IOEXECUTOR_IOCP)

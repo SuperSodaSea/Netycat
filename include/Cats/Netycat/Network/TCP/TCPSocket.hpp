@@ -29,10 +29,10 @@
 
 
 #include "TCPEndpoint.hpp"
+#include "../../IOExecutor.hpp"
 
 #include "Cats/Corecat/Concurrent/Promise.hpp"
 #include "Cats/Corecat/Util/Byte.hpp"
-#include "Cats/Netycat/IOExecutor.hpp"
 
 #include <winsock2.h>
 

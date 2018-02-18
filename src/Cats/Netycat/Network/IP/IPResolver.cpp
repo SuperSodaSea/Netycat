@@ -28,6 +28,8 @@
 
 #include <cstddef>
 
+#include <thread>
+
 #include "Cats/Corecat/Util/Endian.hpp"
 #include "Cats/Netycat/Network/Win32/WSA.hpp"
 
@@ -42,17 +44,35 @@ SystemIPResolver::SystemIPResolver() {
     WSA::init();
     
 }
+SystemIPResolver::SystemIPResolver(IOExecutor& executor_) : executor(&executor_) {
+    
+    WSA::init();
+    
+}
 
 std::vector<IPAddress> SystemIPResolver::resolve(const String8& name) {
     
+    Corecat::ExceptionWrapper e;
+    auto addressList = resolve(name, e);
+    if(e) e.rethrow();
+    return addressList;
+    
+}
+std::vector<IPAddress> SystemIPResolver::resolve(const String8& name, Corecat::ExceptionWrapper& e) {
+    
+    // TODO: Use GetAddrInfoW on Windows
     addrinfo hints;
     addrinfo* result;
     std::memset(&hints, 0, sizeof(hints));
     hints.ai_flags = AI_PASSIVE;
     hints.ai_family = AF_UNSPEC;
     int errcode;
-    if((errcode = ::getaddrinfo(name.getData(), nullptr, &hints, &result)))
-        throw Corecat::IOException("::getaddrinfo failed");
+    if((errcode = ::getaddrinfo(name.getData(), nullptr, &hints, &result))) {
+        
+        e = Corecat::IOException("::getaddrinfo failed");
+        return {};
+        
+    }
     std::size_t count = 0;
     for(addrinfo* cur = result; cur != nullptr; cur = cur->ai_next) ++count;
     std::vector<IPAddress> addressList;
@@ -79,8 +99,35 @@ std::vector<IPAddress> SystemIPResolver::resolve(const String8& name) {
         
     }
     ::freeaddrinfo(result);
-    if(addressList.empty()) throw Corecat::IOException("Unable to resolve hostname");
+    if(addressList.empty()) {
+        
+        e = Corecat::IOException("No address available for address");
+        return {};
+        
+    }
     return addressList;
+    
+}
+void SystemIPResolver::resolve(const String8& name, ResolveCallback cb) {
+    
+    executor->beginWork();
+    std::thread([=, cb = std::move(cb)] {
+        
+        Corecat::ExceptionWrapper e;
+        auto addressList = resolve(name, e);
+        executor->execute([cb = std::move(cb), e = std::move(e), addressList = std::move(addressList)] { cb(e, std::move(addressList)); });
+        executor->endWork();
+        
+    }).detach();
+    
+}
+Corecat::Promise<std::vector<IPAddress>> SystemIPResolver::resolveAsync(const String8& name) {
+    
+    Corecat::Promise<std::vector<IPAddress>> promise;
+    resolve(name, [=](auto& e, auto addressList) {
+        e ? promise.reject(e) : promise.resolve(std::move(addressList));
+    });
+    return promise;
     
 }
 
