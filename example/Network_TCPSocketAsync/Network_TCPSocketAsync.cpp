@@ -27,6 +27,7 @@
 #include <iostream>
 #include <thread>
 
+#include "Cats/Corecat/Concurrent.hpp"
 #include "Cats/Corecat/Util.hpp"
 #include "Cats/Netycat/Network.hpp"
 
@@ -35,65 +36,71 @@ using namespace Cats::Corecat;
 using namespace Cats::Netycat;
 
 
-void runServer(IOExecutor& executor) {
+class Server : public Coroutine<Server> {
     
-    TCPEndpoint endpoint(IPv4Address::getAny(), 12345);
-    auto server = std::make_shared<TCPServer>(executor);
-    server->listen(endpoint);
-    struct Session {
-        
-        TCPSocket socket;
-        std::uint8_t size;
-        char buffer[256];
-        Session(IOExecutor& executor) : socket(executor) {}
-        
-    };
-    auto session = std::make_shared<Session>(executor);
-    server->acceptAsync(session->socket)
-        .then([=] {
-            
-            const char data[] = "Hello, Netycat!";
-            session->size = sizeof(data) - 1;
-            std::memcpy(session->buffer, data, session->size);
-            (std::cout << "Server write: ").write(data, session->size) << std::endl;
-            return session->socket.writeAllAsync(&session->size, 1);
-            
-        }).then([=] {
-            
-            return session->socket.writeAllAsync(session->buffer, session->size);
-            
-        }).fail([server, session](auto& e) { e.with([](const std::exception& e) { std::cerr << e.what() << std::endl; }); });
+private:
     
-}
+    IOExecutor& executor;
+    TCPServer server{executor};
+    TCPSocket socket{executor};
+    const char* data = "Hello, Netycat!";
+    std::uint8_t size = std::uint8_t(std::strlen(data));
+    
+public:
+    
+    Server(IOExecutor& executor_) : executor(executor_) {}
+    
+    void operator ()() {
+        
+        try {
+            
+            CORECAT_COROUTINE {
+                
+                server.listen({IPv4Address::getAny(), 12345});
+                CORECAT_AWAIT(server.acceptAsync(socket));
+                (std::cout << "Server write: ").write(data, size) << std::endl;
+                CORECAT_AWAIT(socket.writeAllAsync(&size, 1));
+                CORECAT_AWAIT(socket.writeAllAsync(data, size));
+                
+            }
+            
+        } catch(std::exception& e) { std::cerr << e.what() << std::endl; }
+        
+    }
+    
+};
 
-void runClient(IOExecutor& executor) {
+class Client : public Coroutine<Client> {
     
-    TCPEndpoint endpoint(IPv4Address::getLoopback(), 12345);
-    struct Session {
-        
-        TCPSocket socket;
-        std::uint8_t size;
-        char buffer[256];
-        Session(IOExecutor& executor) : socket(executor) {}
-        
-    };
-    auto session = std::make_shared<Session>(executor);
-    session->socket.connectAsync(endpoint)
-        .then([=] {
-            
-            return session->socket.readAllAsync(&session->size, 1);
-            
-        }).then([=] {
-            
-            return session->socket.readAllAsync(session->buffer, session->size);
-            
-        }).then([=] {
-            
-            (std::cout << "Client read: ").write(session->buffer, session->size) << std::endl;
-            
-        }).fail([session](auto& e) { e.with([](const std::exception& e) { std::cerr << e.what() << std::endl; }); });
+private:
     
-}
+    IOExecutor& executor;
+    TCPSocket socket{executor};
+    char data[256];
+    std::uint8_t size;
+    
+public:
+    
+    Client(IOExecutor& executor_) : executor(executor_) {}
+    
+    void operator ()() {
+        
+        try {
+            
+            CORECAT_COROUTINE {
+                
+                CORECAT_AWAIT(socket.connectAsync({IPv4Address::getLoopback(), 12345}));
+                CORECAT_AWAIT(socket.readAllAsync(&size, 1));
+                CORECAT_AWAIT(socket.readAllAsync(data, size));
+                (std::cout << "Client read: ").write(data, size) << std::endl;
+                
+            }
+            
+        } catch(std::exception& e) { std::cerr << e.what() << std::endl; }
+        
+    }
+    
+};
 
 
 int main() {
@@ -101,8 +108,8 @@ int main() {
     try {
         
         IOExecutor executor;
-        runServer(executor);
-        runClient(executor);
+        (*std::make_shared<Server>(executor))();
+        (*std::make_shared<Client>(executor))();
         executor.run();
         
     } catch(std::exception& e) { std::cerr << e.what() << std::endl; return 1; }
