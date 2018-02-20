@@ -188,7 +188,7 @@ void TCPSocket::close() {
     
 }
 
-std::size_t TCPSocket::readSome(void* buffer, std::size_t count) {
+std::size_t TCPSocket::read(void* buffer, std::size_t count) {
     
     // TODO: The "count" argument is int on Windows, but size_t on Linux
     std::ptrdiff_t ret = ::recv(socket, static_cast<char*>(buffer), int(count), 0);
@@ -196,7 +196,7 @@ std::size_t TCPSocket::readSome(void* buffer, std::size_t count) {
     return ret;
     
 }
-void TCPSocket::readSome(void* buffer, std::size_t count, ReadCallback cb) {
+void TCPSocket::read(void* buffer, std::size_t count, ReadCallback cb) {
     
     auto overlapped = executor->createOverlapped([=](auto& e, auto count) {
         
@@ -214,10 +214,10 @@ void TCPSocket::readSome(void* buffer, std::size_t count, ReadCallback cb) {
     }
     
 }
-Corecat::Promise<std::size_t> TCPSocket::readSomeAsync(void* buffer, std::size_t count) {
+Corecat::Promise<std::size_t> TCPSocket::readAsync(void* buffer, std::size_t count) {
     
     Corecat::Promise<std::size_t> promise;
-    readSome(buffer, count, [=](auto& e, auto count) {
+    read(buffer, count, [=](auto& e, auto count) {
         e ? promise.reject(e) : promise.resolve(count);
     });
     return promise;
@@ -228,7 +228,7 @@ std::size_t TCPSocket::readAll(void* buffer, std::size_t count) {
     auto p = static_cast<Byte*>(buffer);
     for(auto n = count; n; ) {
         
-        std::size_t ret = readSome(p, n);
+        std::size_t ret = read(p, n);
         p += ret, n -= ret;
         
     }
@@ -238,7 +238,7 @@ std::size_t TCPSocket::readAll(void* buffer, std::size_t count) {
 void TCPSocket::readAllImpl(Byte* buffer, std::size_t n, ReadCallback cb, std::size_t count) {
     
     auto self = this;
-    readSome(buffer, n, [=](auto& e, auto c) {
+    read(buffer, n, [=](auto& e, auto c) {
         
         if(e || n == c) cb(e, count);
         else self->readAllImpl(buffer + c, n - c, cb, count);
@@ -261,14 +261,14 @@ Corecat::Promise<std::size_t> TCPSocket::readAllAsync(void* buffer, std::size_t 
     
 }
 
-std::size_t TCPSocket::writeSome(const void* buffer, std::size_t count) {
+std::size_t TCPSocket::write(const void* buffer, std::size_t count) {
     
     std::ptrdiff_t ret = ::send(socket, static_cast<const char*>(buffer), int(count), 0);
     if(ret < 0) throw Corecat::IOException("::send failed");
     return ret;
     
 }
-void TCPSocket::writeSome(const void* buffer, std::size_t count, WriteCallback cb) {
+void TCPSocket::write(const void* buffer, std::size_t count, WriteCallback cb) {
     
     auto overlapped = executor->createOverlapped([=](auto& e, auto count) {
         
@@ -285,10 +285,10 @@ void TCPSocket::writeSome(const void* buffer, std::size_t count, WriteCallback c
     }
     
 }
-Corecat::Promise<std::size_t> TCPSocket::writeSomeAsync(const void* buffer, std::size_t count) {
+Corecat::Promise<std::size_t> TCPSocket::writeAsync(const void* buffer, std::size_t count) {
     
     Corecat::Promise<std::size_t> promise;
-    writeSome(buffer, count, [=](auto& e, auto count) {
+    write(buffer, count, [=](auto& e, auto count) {
         e ? promise.reject(e) : promise.resolve(count);
     });
     return promise;
@@ -299,7 +299,7 @@ std::size_t TCPSocket::writeAll(const void* buffer, std::size_t count) {
     auto p = static_cast<const Byte*>(buffer);
     for(auto n = count; n; ) {
         
-        std::size_t ret = writeSome(p, n);
+        std::size_t ret = write(p, n);
         p += ret, n -= ret;
         
     }
@@ -309,7 +309,7 @@ std::size_t TCPSocket::writeAll(const void* buffer, std::size_t count) {
 void TCPSocket::writeAllImpl(const Byte* buffer, std::size_t n, WriteCallback cb, std::size_t count) {
     
     auto self = this;
-    writeSome(buffer, n, [=](auto& e, auto c) {
+    write(buffer, n, [=](auto& e, auto c) {
         
         if(e || n == c) cb(e, count);
         else self->writeAllImpl(buffer + c, n - c, cb, count);
@@ -358,6 +358,9 @@ TCPSocket::EndpointType TCPSocket::getRemoteEndpoint() {
     }
     
 }
+
+TCPSocket::NativeHandleType TCPSocket::getHandle() { return socket; }
+void TCPSocket::setHandle(NativeHandleType socket_) { socket = socket_; }
 
 }
 }

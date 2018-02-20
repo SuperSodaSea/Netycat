@@ -33,8 +33,6 @@
 #include "IPAddress.hpp"
 #include "../../IOExecutor.hpp"
 
-#include "Cats/Corecat/Concurrent/Promise.hpp"
-
 
 namespace Cats {
 namespace Netycat {

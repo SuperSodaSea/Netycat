@@ -32,8 +32,11 @@
 
 #include <atomic>
 #include <functional>
+#include <queue>
 
+#include "Cats/Corecat/Concurrent/Promise.hpp"
 #include "Cats/Corecat/System/OS.hpp"
+#include "Cats/Corecat/Time/HighResolutionClock.hpp"
 #include "Cats/Corecat/Util/ExceptionWrapper.hpp"
 
 #if defined(CORECAT_OS_WINDOWS)
@@ -72,6 +75,24 @@ private:
     
 public:
     
+    using WaitCallback = std::function<void()>;
+    
+private:
+    
+    struct Timer {
+        
+        Corecat::HighResolutionClock::time_point timePoint;
+        WaitCallback cb;
+        
+        Timer(Corecat::HighResolutionClock::time_point timePoint_, WaitCallback cb_) : timePoint(timePoint_), cb(std::move(cb_)) {}
+        
+        friend bool operator <(const Timer& a, const Timer& b) { return a.timePoint > b.timePoint; }
+        
+    };
+    std::priority_queue<Timer> timerQueue;
+    
+public:
+    
     IOExecutor();
     IOExecutor(const IOExecutor& src) = delete;
     ~IOExecutor();
@@ -81,6 +102,9 @@ public:
     void execute(std::function<void()> f);
     void beginWork() { ++overlappedCount; }
     void endWork() { --overlappedCount; }
+    
+    void wait(double time, WaitCallback cb);
+    Corecat::Promise<> waitAsync(double time);
     
     void run();
     

@@ -111,7 +111,7 @@ void TCPServer::accept(TCPSocket& s) {
     int saddrSize = sizeof(saddr);
     SOCKET sock = ::accept(socket, reinterpret_cast<sockaddr*>(&saddr), &saddrSize);
     if(sock == INVALID_SOCKET) throw Corecat::IOException("::accept failed");
-    s = {sock};
+    s.setHandle(sock);
     
 }
 void TCPServer::accept(TCPSocket& s, AcceptCallback cb) {
@@ -139,7 +139,7 @@ void TCPServer::accept(TCPSocket& s, AcceptCallback cb) {
         
         delete[] buffer;
         if(e) ::closesocket(sock);
-        else s = {*executor, sock};
+        else s.setHandle(sock);
         cb(e);
         
     });

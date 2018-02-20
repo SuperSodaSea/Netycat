@@ -31,7 +31,6 @@
 #include "TCPEndpoint.hpp"
 #include "../../IOExecutor.hpp"
 
-#include "Cats/Corecat/Concurrent/Promise.hpp"
 #include "Cats/Corecat/Util/Byte.hpp"
 
 #include <winsock2.h>
@@ -69,32 +68,33 @@ public:
     TCPSocket(NativeHandleType socket_);
     TCPSocket(IOExecutor& executor_, NativeHandleType socket_);
     TCPSocket(const TCPSocket& src) = delete;
-    TCPSocket(TCPSocket&& src) : executor(src.executor), socket(src.socket) { src.socket = 0; }
     ~TCPSocket();
     
     TCPSocket& operator =(const TCPSocket& src) = delete;
-    TCPSocket& operator =(TCPSocket&& src) { if(socket) close(); executor = src.executor, socket = src.socket, src.socket = 0; return *this; }
     
     void connect(const EndpointType& endpoint);
     void connect(const EndpointType& endpoint, ConnectCallback cb);
     Corecat::Promise<> connectAsync(const EndpointType& endpoint);
     void close();
     
-    std::size_t readSome(void* buffer, std::size_t count);
-    void readSome(void* buffer, std::size_t count, ReadCallback cb);
-    Corecat::Promise<std::size_t> readSomeAsync(void* buffer, std::size_t count);
+    std::size_t read(void* buffer, std::size_t count);
+    void read(void* buffer, std::size_t count, ReadCallback cb);
+    Corecat::Promise<std::size_t> readAsync(void* buffer, std::size_t count);
     std::size_t readAll(void* buffer, std::size_t count);
     void readAll(void* buffer, std::size_t count, ReadCallback cb);
     Corecat::Promise<std::size_t> readAllAsync(void* buffer, std::size_t count);
     
-    std::size_t writeSome(const void* buffer, std::size_t count);
-    void writeSome(const void* buffer, std::size_t count, WriteCallback cb);
-    Corecat::Promise<std::size_t> writeSomeAsync(const void* buffer, std::size_t count);
+    std::size_t write(const void* buffer, std::size_t count);
+    void write(const void* buffer, std::size_t count, WriteCallback cb);
+    Corecat::Promise<std::size_t> writeAsync(const void* buffer, std::size_t count);
     std::size_t writeAll(const void* buffer, std::size_t count);
     void writeAll(const void* buffer, std::size_t count, WriteCallback cb);
     Corecat::Promise<std::size_t> writeAllAsync(const void* buffer, std::size_t count);
     
     EndpointType getRemoteEndpoint();
+    
+    NativeHandleType getHandle();
+    void setHandle(NativeHandleType socket_);
     
 private:
     

@@ -52,21 +52,52 @@ void IOExecutor::execute(std::function<void()> f) {
 #endif
 }
 
+void IOExecutor::wait(double time, WaitCallback cb) {
+    
+    timerQueue.emplace(Corecat::HighResolutionClock::now() + std::chrono::duration<double>(time), std::move(cb));
+    
+}
+Corecat::Promise<> IOExecutor::waitAsync(double time) {
+    
+    Corecat::Promise<> promise;
+    wait(time, [=]() { promise.resolve(); });
+    return promise;
+    
+}
+
 void IOExecutor::run() {
 #if defined(NETYCAT_IOEXECUTOR_IOCP)
-    while(overlappedCount) {
+    while(overlappedCount || timerQueue.size()) {
         
         DWORD byteCount;
         ULONG_PTR completionKey;
         OVERLAPPED* o = nullptr;
-        bool success = ::GetQueuedCompletionStatus(completionPort, &byteCount, &completionKey, &o, INFINITE);
-        if(o) {
+        
+        auto now = Corecat::HighResolutionClock::now();
+        while(timerQueue.size() && timerQueue.top().timePoint <= now) {
             
-            Corecat::ExceptionWrapper e;
-            if(!success) e = Corecat::IOException("::GetQueuedCompletionStatus failed");
-            Overlapped* overlapped = static_cast<Overlapped*>(o);
-            overlapped->cb(e, byteCount);
-            destroyOverlapped(overlapped);
+            timerQueue.top().cb();
+            timerQueue.pop();
+            
+        }
+        
+        DWORD time = timerQueue.size() ? DWORD((timerQueue.top().timePoint - now).count() * 1000) : INFINITE;
+        if(overlappedCount) {
+            
+            bool success = ::GetQueuedCompletionStatus(completionPort, &byteCount, &completionKey, &o, time);
+            if(o) {
+                
+                Corecat::ExceptionWrapper e;
+                if(!success) e = Corecat::IOException("::GetQueuedCompletionStatus failed");
+                Overlapped* overlapped = static_cast<Overlapped*>(o);
+                overlapped->cb(e, byteCount);
+                destroyOverlapped(overlapped);
+                
+            }
+            
+        } else if(time != INFINITE) {
+            
+            ::Sleep(time);
             
         }
         

@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
         File file2(argv[2], File::Mode::WRITE | File::Mode::CREATE);
         auto os = createDataViewOutputStream(file2);
         Byte data[256];
-        while(std::size_t size = is.readSome(data, sizeof(data)))
+        while(std::size_t size = is.read(data, sizeof(data)))
             os.writeAll(data, size);
         
     } catch(std::exception& e) { std::cerr << e.what() << std::endl; return 1; }
