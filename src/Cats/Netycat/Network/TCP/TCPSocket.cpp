@@ -98,6 +98,7 @@ void TCPSocket::connect(const EndpointType& endpoint) {
         throw Corecat::IOException("::connect failed");
         
     }
+    if(executor) executor->attachHandle(HANDLE(sock));
     socket = sock;
     
 }
@@ -360,7 +361,7 @@ TCPSocket::EndpointType TCPSocket::getRemoteEndpoint() {
 }
 
 TCPSocket::NativeHandleType TCPSocket::getHandle() { return socket; }
-void TCPSocket::setHandle(NativeHandleType socket_) { socket = socket_; }
+void TCPSocket::setHandle(NativeHandleType socket_) { socket = socket_; if(executor) executor->attachHandle(HANDLE(socket)); }
 
 }
 }

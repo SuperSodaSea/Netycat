@@ -67,6 +67,7 @@ Corecat::Promise<> IOExecutor::waitAsync(double time) {
 
 void IOExecutor::run() {
 #if defined(NETYCAT_IOEXECUTOR_IOCP)
+    // TODO: Add mutithread support
     while(overlappedCount || timerQueue.size()) {
         
         DWORD byteCount;
@@ -84,6 +85,7 @@ void IOExecutor::run() {
         DWORD time = timerQueue.size() ? DWORD((timerQueue.top().timePoint - now).count() * 1000) : INFINITE;
         if(overlappedCount) {
             
+            // TODO: Use ::GetQueuedCompletionStatusEx
             bool success = ::GetQueuedCompletionStatus(completionPort, &byteCount, &completionKey, &o, time);
             if(o) {
                 

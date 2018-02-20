@@ -43,13 +43,12 @@ int main(int argc, char** argv) {
         SystemIPResolver resolver;
         for(int i = 1; i < argc; ++i) {
             
-            std::cout << argv[i] << ":" << std::endl;
             try {
                 
                 auto addressList = resolver.resolve(argv[i]);
-                for(auto&& x : addressList) std::cout << "    " << x.toString() << std::endl;
+                for(auto&& x : addressList) std::cout << argv[i] << ": " << x.toString() << std::endl;
                 
-            } catch(std::exception& e) { std::cout << "    " << e.what() << std::endl; }
+            } catch(std::exception& e) { std::cerr << argv[i] << ": " << e.what() << std::endl; }
             
         }
         
