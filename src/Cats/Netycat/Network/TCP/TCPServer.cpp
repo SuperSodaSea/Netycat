@@ -27,7 +27,6 @@
 #include "Cats/Netycat/Network/TCP/TCPServer.hpp"
 
 #include "Cats/Corecat/Util/Endian.hpp"
-#include "Cats/Netycat/Network/Win32/WSA.hpp"
 
 
 namespace Cats {
@@ -53,7 +52,7 @@ TCPServer::~TCPServer() {
     
 }
 
-void TCPServer::listen(TCPEndpoint endpoint, std::size_t backlog) {
+void TCPServer::listen(const EndpointType& endpoint, std::size_t backlog) {
     
     SOCKET sock;
     sockaddr_storage saddr = {};
@@ -105,6 +104,16 @@ void TCPServer::listen(TCPEndpoint endpoint, std::size_t backlog) {
     if(executor) executor->attachHandle(HANDLE(socket));
     
 }
+void TCPServer::listen(std::uint16_t port, std::size_t backlog) {
+    
+    listen({IPv4Address::getAny(), port}, backlog);
+    
+}
+void TCPServer::listen(const IPAddress& address, std::uint16_t port, std::size_t backlog) {
+    
+    listen({address, port}, backlog);
+    
+}
 void TCPServer::accept(TCPSocket& s) {
     
     sockaddr_storage saddr;
@@ -115,7 +124,7 @@ void TCPServer::accept(TCPSocket& s) {
     
 }
 void TCPServer::accept(TCPSocket& s, AcceptCallback cb) {
-    
+#if defined(NETYCAT_IOEXECUTOR_IOCP)
     SOCKET sock;
     switch(type) {
     case IPAddress::Type::IPv4: {
@@ -152,7 +161,7 @@ void TCPServer::accept(TCPSocket& s, AcceptCallback cb) {
         cb(Corecat::IOException("::AccpetEx failed"));
         
     }
-    
+#endif
 }
 Corecat::Promise<> TCPServer::acceptAsync(TCPSocket& s) {
     

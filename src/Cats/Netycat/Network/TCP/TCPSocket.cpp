@@ -27,7 +27,6 @@
 #include "Cats/Netycat/Network/TCP/TCPSocket.hpp"
 
 #include "Cats/Corecat/Util/Endian.hpp"
-#include "Cats/Netycat/Network/Win32/WSA.hpp"
 
 
 namespace Cats {
@@ -102,8 +101,13 @@ void TCPSocket::connect(const EndpointType& endpoint) {
     socket = sock;
     
 }
-void TCPSocket::connect(const EndpointType& endpoint, ConnectCallback cb) {
+void TCPSocket::connect(const IPAddress& address, std::uint16_t port) {
     
+    connect({address, port});
+    
+}
+void TCPSocket::connect(const EndpointType& endpoint, ConnectCallback cb) {
+#if defined(NETYCAT_IOEXECUTOR_IOCP)
     SOCKET sock;
     sockaddr_storage saddr = {};
     switch(endpoint.getAddress().getType()) {
@@ -171,6 +175,11 @@ void TCPSocket::connect(const EndpointType& endpoint, ConnectCallback cb) {
         cb(Corecat::IOException("::ConnectEx failed"));
         
     }
+#endif
+}
+void TCPSocket::connect(const IPAddress& address, std::uint16_t port, ConnectCallback cb) {
+    
+    connect({address, port}, std::move(cb));
     
 }
 Corecat::Promise<> TCPSocket::connectAsync(const EndpointType& endpoint) {
@@ -180,6 +189,11 @@ Corecat::Promise<> TCPSocket::connectAsync(const EndpointType& endpoint) {
         e ? promise.reject(e) : promise.resolve();
     });
     return promise;
+    
+}
+Corecat::Promise<> TCPSocket::connectAsync(const IPAddress& address, std::uint16_t port) {
+    
+    return connectAsync({address, port});
     
 }
 void TCPSocket::close() {
@@ -198,12 +212,8 @@ std::size_t TCPSocket::read(void* buffer, std::size_t count) {
     
 }
 void TCPSocket::read(void* buffer, std::size_t count, ReadCallback cb) {
-    
-    auto overlapped = executor->createOverlapped([=](auto& e, auto count) {
-        
-        cb(e, count);
-        
-    });
+#if defined(NETYCAT_IOEXECUTOR_IOCP)
+    auto overlapped = executor->createOverlapped([=](auto& e, auto count) { cb(e, count); });
     WSABUF buf = {u_long(count), static_cast<char*>(buffer)};
     DWORD flags = 0;
     if(::WSARecv(socket, &buf, 1, nullptr, &flags, overlapped, nullptr)
@@ -213,7 +223,7 @@ void TCPSocket::read(void* buffer, std::size_t count, ReadCallback cb) {
         cb(Corecat::IOException("::WSARecv failed"), 0);
         
     }
-    
+#endif
 }
 Corecat::Promise<std::size_t> TCPSocket::readAsync(void* buffer, std::size_t count) {
     
@@ -270,12 +280,8 @@ std::size_t TCPSocket::write(const void* buffer, std::size_t count) {
     
 }
 void TCPSocket::write(const void* buffer, std::size_t count, WriteCallback cb) {
-    
-    auto overlapped = executor->createOverlapped([=](auto& e, auto count) {
-        
-        cb(e, count);
-        
-    });
+#if defined(NETYCAT_IOEXECUTOR_IOCP)
+    auto overlapped = executor->createOverlapped([=](auto& e, auto count) { cb(e, count); });
     WSABUF buf = {u_long(count), static_cast<char*>(const_cast<void*>(buffer))};
     if(::WSASend(socket, &buf, 1, nullptr, 0, overlapped, nullptr)
         && ::GetLastError() != ERROR_IO_PENDING) {
@@ -284,7 +290,7 @@ void TCPSocket::write(const void* buffer, std::size_t count, WriteCallback cb) {
         cb(Corecat::IOException("::WSASend failed"), 0);
         
     }
-    
+#endif
 }
 Corecat::Promise<std::size_t> TCPSocket::writeAsync(const void* buffer, std::size_t count) {
     

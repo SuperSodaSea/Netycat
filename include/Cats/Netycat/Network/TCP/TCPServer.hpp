@@ -66,7 +66,9 @@ public:
     
     TCPServer& operator =(const TCPServer& src) = delete;
     
-    void listen(EndpointType endpoint, std::size_t backlog = 128);
+    void listen(const EndpointType& endpoint, std::size_t backlog = 128);
+    void listen(std::uint16_t port, std::size_t backlog = 128);
+    void listen(const IPAddress& address, std::uint16_t port, std::size_t backlog = 128);
     void accept(TCPSocket& s);
     void accept(TCPSocket& s, AcceptCallback cb);
     Corecat::Promise<> acceptAsync(TCPSocket& s);

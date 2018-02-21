@@ -29,11 +29,10 @@
 
 
 #include "TCPEndpoint.hpp"
+#include "../Win32/WSA.hpp"
 #include "../../IOExecutor.hpp"
 
 #include "Cats/Corecat/Util/Byte.hpp"
-
-#include <winsock2.h>
 
 
 namespace Cats {
@@ -73,8 +72,11 @@ public:
     TCPSocket& operator =(const TCPSocket& src) = delete;
     
     void connect(const EndpointType& endpoint);
+    void connect(const IPAddress& address, std::uint16_t port);
     void connect(const EndpointType& endpoint, ConnectCallback cb);
+    void connect(const IPAddress& address, std::uint16_t port, ConnectCallback cb);
     Corecat::Promise<> connectAsync(const EndpointType& endpoint);
+    Corecat::Promise<> connectAsync(const IPAddress& address, std::uint16_t port);
     void close();
     
     std::size_t read(void* buffer, std::size_t count);

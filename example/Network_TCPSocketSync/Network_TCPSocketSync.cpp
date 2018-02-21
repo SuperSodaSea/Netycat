@@ -38,7 +38,7 @@ using namespace Cats::Netycat;
 void runServer() {
     
     TCPServer server;
-    server.listen({IPv4Address::getAny(), 12345});
+    server.listen(12345);
     TCPSocket socket;
     server.accept(socket);
     const char data[] = "Hello, Netycat!";
@@ -52,7 +52,7 @@ void runServer() {
 void runClient() {
     
     TCPSocket socket;
-    socket.connect({IPv4Address::getLoopback(), 12345});
+    socket.connect(IPv4Address::getLoopback(), 12345);
     std::uint8_t size;
     char buffer[256];
     socket.readAll(&size, 1);

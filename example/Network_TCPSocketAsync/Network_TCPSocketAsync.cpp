@@ -56,7 +56,7 @@ public:
             
             CORECAT_COROUTINE {
                 
-                server.listen({IPv4Address::getAny(), 12345});
+                server.listen(12345);
                 CORECAT_AWAIT(server.acceptAsync(socket));
                 (std::cout << "Server write: ").write(data, size) << std::endl;
                 CORECAT_AWAIT(socket.writeAllAsync(&size, 1));
@@ -89,7 +89,7 @@ public:
             
             CORECAT_COROUTINE {
                 
-                CORECAT_AWAIT(socket.connectAsync({IPv4Address::getLoopback(), 12345}));
+                CORECAT_AWAIT(socket.connectAsync(IPv4Address::getLoopback(), 12345));
                 CORECAT_AWAIT(socket.readAllAsync(&size, 1));
                 CORECAT_AWAIT(socket.readAllAsync(data, size));
                 (std::cout << "Client read: ").write(data, size) << std::endl;
