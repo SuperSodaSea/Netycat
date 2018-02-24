@@ -78,11 +78,9 @@ public:
     
     File(const FilePath& path, Mode mode);
     File(const File& src) = delete;
-    File(File&& src) = default;
     ~File() override = default;
     
     File& operator =(const File& src) = delete;
-    File& operator =(File&& src) = default;
     
     bool isReadable() override { return readable; }
     bool isWritable() override { return writable; }

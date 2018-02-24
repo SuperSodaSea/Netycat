@@ -68,11 +68,9 @@ public:
     
     MappedFile(File& file, std::uint64_t offset, std::size_t size_, Mode mode);
     MappedFile(const MappedFile& src) = delete;
-    MappedFile(MappedFile&& src) : handle(std::move(src.handle)), size(src.size), data(src.data) { src.data = nullptr; }
     ~MappedFile() override;
     
     MappedFile& operator =(const MappedFile& src) = delete;
-    MappedFile& operator =(MappedFile&& src) { handle = std::move(src.handle), size = src.size, data = src.data, src.data = nullptr; return *this; }
     
     const Byte* getData() const noexcept { return data; }
     Byte* getData() noexcept { return data; }

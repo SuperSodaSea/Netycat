@@ -34,197 +34,114 @@ namespace Netycat {
 inline namespace Network {
 inline namespace TCP {
 
-TCPSocket::TCPSocket() {
-    
-    WSA::init();
-    
-}
-TCPSocket::TCPSocket(IOExecutor& executor_) : executor(&executor_) {
-    
-    WSA::init();
-    
-}
-TCPSocket::TCPSocket(NativeHandleType socket_) : socket(socket_) {}
-TCPSocket::TCPSocket(IOExecutor& executor_, NativeHandleType socket_) : executor(&executor_), socket(socket_) {
-    
-    executor->attachHandle(HANDLE(socket));
-    
-}
-TCPSocket::~TCPSocket() {
-    
-    if(socket) close();
-    
-}
+TCPSocket::TCPSocket() {}
+TCPSocket::TCPSocket(IOExecutor& executor) : socket(executor) {}
+TCPSocket::TCPSocket(NativeHandleType handle) : socket(handle) {}
+TCPSocket::TCPSocket(IOExecutor& executor, NativeHandleType handle) : socket(executor, handle) {}
+TCPSocket::~TCPSocket() {}
 
-void TCPSocket::connect(const EndpointType& endpoint) {
+void TCPSocket::close() { socket.close(); }
+
+void TCPSocket::connect(const IPAddress& address, std::uint16_t port) {
     
-    SOCKET sock;
-    sockaddr_storage saddr = {};
-    switch(endpoint.getAddress().getType()) {
+    sockaddr_storage saddr;
+    std::size_t saddrSize;
+    switch(address.getType()) {
     case IPAddress::Type::IPv4: {
         
-        sock = ::socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-        if(sock == INVALID_SOCKET) throw Corecat::IOException("::socket failed");
-        std::uint32_t addr = endpoint.getAddress().getIPv4();
-        std::uint16_t port = endpoint.getPort();
+        // TODO: AF_INET vs PF_INET
+        socket.socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+        std::uint32_t addr = address.getIPv4();
         sockaddr_in* saddr4 = reinterpret_cast<sockaddr_in*>(&saddr);
+        *saddr4 = {};
         saddr4->sin_family = AF_INET;
         saddr4->sin_port = Corecat::convertNativeToBig(port);
         saddr4->sin_addr.s_addr = Corecat::convertNativeToBig(addr);
+        saddrSize = sizeof(sockaddr_in);
         break;
         
     }
     case IPAddress::Type::IPv6: {
         
-        sock = ::socket(PF_INET6, SOCK_STREAM, IPPROTO_TCP);
-        if(sock == INVALID_SOCKET) throw Corecat::IOException("::socket failed");
-        const std::uint8_t* addr = endpoint.getAddress().getIPv6().getData();
-        std::uint32_t scope = endpoint.getAddress().getIPv6().getScope();
-        std::uint16_t port = endpoint.getPort();
+        socket.socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
+        const std::uint8_t* addr = address.getIPv6().getData();
+        std::uint32_t scope = address.getIPv6().getScope();
         sockaddr_in6* saddr6 = reinterpret_cast<sockaddr_in6*>(&saddr);
+        *saddr6 = {};
         saddr6->sin6_family = AF_INET6;
         saddr6->sin6_port = Corecat::convertNativeToBig(port);
         saddr6->sin6_scope_id = Corecat::convertNativeToBig(scope);
         std::memcpy(saddr6->sin6_addr.s6_addr, addr, 16);
+        saddrSize = sizeof(sockaddr_in6);
         break;
         
     }
     default: throw Corecat::InvalidArgumentException("Invalid endpoint type");
     }
-    if(::connect(sock, reinterpret_cast<sockaddr*>(&saddr), sizeof(saddr))) {
-        
-        ::closesocket(sock);
-        throw Corecat::IOException("::connect failed");
-        
-    }
-    if(executor) executor->attachHandle(HANDLE(sock));
-    socket = sock;
+    socket.connect(&saddr, saddrSize);
     
 }
-void TCPSocket::connect(const IPAddress& address, std::uint16_t port) {
+void TCPSocket::connect(const EndpointType& endpoint) { connect(endpoint.getAddress(), endpoint.getPort()); }
+void TCPSocket::connect(const IPAddress& address, std::uint16_t port, ConnectCallback cb) {
     
-    connect({address, port});
-    
-}
-void TCPSocket::connect(const EndpointType& endpoint, ConnectCallback cb) {
-#if defined(NETYCAT_IOEXECUTOR_IOCP)
-    SOCKET sock;
-    sockaddr_storage saddr = {};
-    switch(endpoint.getAddress().getType()) {
+    sockaddr_storage saddr;
+    std::size_t saddrSize;
+    switch(address.getType()) {
     case IPAddress::Type::IPv4: {
         
-        sock = ::socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-        if(sock == INVALID_SOCKET) { cb(Corecat::IOException("::socket failed")); return; }
-        sockaddr_in local = {};
-        local.sin_family = AF_INET;
-        if(::bind(sock, reinterpret_cast<struct sockaddr*>(&local), sizeof(local))) {
-            
-            ::closesocket(sock);
-            cb(Corecat::IOException("::bind failed"));
-            return;
-            
-        }
-        std::uint32_t addr = endpoint.getAddress().getIPv4();
-        std::uint16_t port = endpoint.getPort();
+        socket.socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+        std::uint32_t addr = address.getIPv4();
         sockaddr_in* saddr4 = reinterpret_cast<sockaddr_in*>(&saddr);
+        *saddr4 = {};
         saddr4->sin_family = AF_INET;
         saddr4->sin_port = Corecat::convertNativeToBig(port);
         saddr4->sin_addr.s_addr = Corecat::convertNativeToBig(addr);
+        saddrSize = sizeof(sockaddr_in);
         break;
         
     }
     case IPAddress::Type::IPv6: {
         
-        sock = ::socket(PF_INET6, SOCK_STREAM, IPPROTO_TCP);
-        if(sock == INVALID_SOCKET) { cb(Corecat::IOException("::socket failed")); return; }
-        sockaddr_in6 local = {};
-        local.sin6_family = AF_INET6;
-        if(::bind(sock, reinterpret_cast<struct sockaddr*>(&local), sizeof(local))) {
-            
-            ::closesocket(sock);
-            cb(Corecat::IOException("::bind failed"));
-            return;
-            
-        }
-        const std::uint8_t* addr = endpoint.getAddress().getIPv6().getData();
-        std::uint32_t scope = endpoint.getAddress().getIPv6().getScope();
-        std::uint16_t port = endpoint.getPort();
+        socket.socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
+        const std::uint8_t* addr = address.getIPv6().getData();
+        std::uint32_t scope = address.getIPv6().getScope();
         sockaddr_in6* saddr6 = reinterpret_cast<sockaddr_in6*>(&saddr);
+        *saddr6 = {};
         saddr6->sin6_family = AF_INET6;
         saddr6->sin6_port = Corecat::convertNativeToBig(port);
         saddr6->sin6_scope_id = Corecat::convertNativeToBig(scope);
         std::memcpy(saddr6->sin6_addr.s6_addr, addr, 16);
+        saddrSize = sizeof(sockaddr_in6);
         break;
         
     }
     default: cb(Corecat::InvalidArgumentException("Invalid endpoint type")); return;
     }
-    executor->attachHandle(HANDLE(sock));
-    auto overlapped = executor->createOverlapped([=](auto& e, auto) {
-        
-        if(e) ::closesocket(sock);
-        else socket = sock;
-        cb(e);
-        
-    });
-    if(!WSA::ConnectEx(sock, reinterpret_cast<struct sockaddr*>(&saddr), sizeof(saddr), nullptr, 0, nullptr, overlapped)
-        && ::GetLastError() != ERROR_IO_PENDING) {
-        
-        executor->destroyOverlapped(overlapped);
-        ::closesocket(sock);
-        cb(Corecat::IOException("::ConnectEx failed"));
-        
-    }
-#endif
-}
-void TCPSocket::connect(const IPAddress& address, std::uint16_t port, ConnectCallback cb) {
-    
-    connect({address, port}, std::move(cb));
+    socket.connect(&saddr, saddrSize, std::move(cb));
     
 }
-Corecat::Promise<> TCPSocket::connectAsync(const EndpointType& endpoint) {
+void TCPSocket::connect(const EndpointType& endpoint, ConnectCallback cb) {
+    
+    connect(endpoint.getAddress(), endpoint.getPort(), std::move(cb));
+    
+}
+Corecat::Promise<> TCPSocket::connectAsync(const IPAddress& address, std::uint16_t port) {
     
     Corecat::Promise<> promise;
-    connect(endpoint, [=](auto& e) {
+    connect(address, port, [=](auto& e) {
         e ? promise.reject(e) : promise.resolve();
     });
     return promise;
     
 }
-Corecat::Promise<> TCPSocket::connectAsync(const IPAddress& address, std::uint16_t port) {
+Corecat::Promise<> TCPSocket::connectAsync(const EndpointType& endpoint) {
     
-    return connectAsync({address, port});
-    
-}
-void TCPSocket::close() {
-    
-    ::closesocket(socket);
-    socket = 0;
+    return connectAsync(endpoint.getAddress(), endpoint.getPort());
     
 }
 
-std::size_t TCPSocket::read(void* buffer, std::size_t count) {
-    
-    // TODO: The "count" argument is int on Windows, but size_t on Linux
-    std::ptrdiff_t ret = ::recv(socket, static_cast<char*>(buffer), int(count), 0);
-    if(ret < 0) throw Corecat::IOException("::recv failed");
-    return ret;
-    
-}
-void TCPSocket::read(void* buffer, std::size_t count, ReadCallback cb) {
-#if defined(NETYCAT_IOEXECUTOR_IOCP)
-    auto overlapped = executor->createOverlapped([=](auto& e, auto count) { cb(e, count); });
-    WSABUF buf = {u_long(count), static_cast<char*>(buffer)};
-    DWORD flags = 0;
-    if(::WSARecv(socket, &buf, 1, nullptr, &flags, overlapped, nullptr)
-        && ::GetLastError() != ERROR_IO_PENDING) {
-        
-        executor->destroyOverlapped(overlapped);
-        cb(Corecat::IOException("::WSARecv failed"), 0);
-        
-    }
-#endif
-}
+std::size_t TCPSocket::read(void* buffer, std::size_t count) { return socket.read(buffer, count); }
+void TCPSocket::read(void* buffer, std::size_t count, ReadCallback cb) { socket.read(buffer, count, std::move(cb)); }
 Corecat::Promise<std::size_t> TCPSocket::readAsync(void* buffer, std::size_t count) {
     
     Corecat::Promise<std::size_t> promise;
@@ -234,34 +151,9 @@ Corecat::Promise<std::size_t> TCPSocket::readAsync(void* buffer, std::size_t cou
     return promise;
     
 }
-std::size_t TCPSocket::readAll(void* buffer, std::size_t count) {
-    
-    auto p = static_cast<Byte*>(buffer);
-    for(auto n = count; n; ) {
-        
-        std::size_t ret = read(p, n);
-        p += ret, n -= ret;
-        
-    }
-    return count;
-    
-}
-void TCPSocket::readAllImpl(Byte* buffer, std::size_t n, ReadCallback cb, std::size_t count) {
-    
-    auto self = this;
-    read(buffer, n, [=](auto& e, auto c) {
-        
-        if(e || n == c) cb(e, count);
-        else self->readAllImpl(buffer + c, n - c, cb, count);
-        
-    });
-    
-}
-void TCPSocket::readAll(void* buffer, std::size_t count, ReadCallback cb) {
-    
-    readAllImpl(static_cast<Byte*>(buffer), count, cb, count);
-    
-}
+
+std::size_t TCPSocket::readAll(void* buffer, std::size_t count) { return socket.readAll(buffer, count); }
+void TCPSocket::readAll(void* buffer, std::size_t count, ReadCallback cb) { socket.readAll(buffer, count, std::move(cb)); }
 Corecat::Promise<std::size_t> TCPSocket::readAllAsync(void* buffer, std::size_t count) {
     
     Corecat::Promise<std::size_t> promise;
@@ -272,26 +164,8 @@ Corecat::Promise<std::size_t> TCPSocket::readAllAsync(void* buffer, std::size_t 
     
 }
 
-std::size_t TCPSocket::write(const void* buffer, std::size_t count) {
-    
-    std::ptrdiff_t ret = ::send(socket, static_cast<const char*>(buffer), int(count), 0);
-    if(ret < 0) throw Corecat::IOException("::send failed");
-    return ret;
-    
-}
-void TCPSocket::write(const void* buffer, std::size_t count, WriteCallback cb) {
-#if defined(NETYCAT_IOEXECUTOR_IOCP)
-    auto overlapped = executor->createOverlapped([=](auto& e, auto count) { cb(e, count); });
-    WSABUF buf = {u_long(count), static_cast<char*>(const_cast<void*>(buffer))};
-    if(::WSASend(socket, &buf, 1, nullptr, 0, overlapped, nullptr)
-        && ::GetLastError() != ERROR_IO_PENDING) {
-        
-        executor->destroyOverlapped(overlapped);
-        cb(Corecat::IOException("::WSASend failed"), 0);
-        
-    }
-#endif
-}
+std::size_t TCPSocket::write(const void* buffer, std::size_t count) { return socket.write(buffer, count); }
+void TCPSocket::write(const void* buffer, std::size_t count, WriteCallback cb) { socket.write(buffer, count, std::move(cb)); }
 Corecat::Promise<std::size_t> TCPSocket::writeAsync(const void* buffer, std::size_t count) {
     
     Corecat::Promise<std::size_t> promise;
@@ -301,34 +175,9 @@ Corecat::Promise<std::size_t> TCPSocket::writeAsync(const void* buffer, std::siz
     return promise;
     
 }
-std::size_t TCPSocket::writeAll(const void* buffer, std::size_t count) {
-    
-    auto p = static_cast<const Byte*>(buffer);
-    for(auto n = count; n; ) {
-        
-        std::size_t ret = write(p, n);
-        p += ret, n -= ret;
-        
-    }
-    return count;
-    
-}
-void TCPSocket::writeAllImpl(const Byte* buffer, std::size_t n, WriteCallback cb, std::size_t count) {
-    
-    auto self = this;
-    write(buffer, n, [=](auto& e, auto c) {
-        
-        if(e || n == c) cb(e, count);
-        else self->writeAllImpl(buffer + c, n - c, cb, count);
-        
-    });
-    
-}
-void TCPSocket::writeAll(const void* buffer, std::size_t count, WriteCallback cb) {
-    
-    writeAllImpl(static_cast<const Byte*>(buffer), count, cb, count);
-    
-}
+
+std::size_t TCPSocket::writeAll(const void* buffer, std::size_t count) { return socket.writeAll(buffer, count); }
+void TCPSocket::writeAll(const void* buffer, std::size_t count, WriteCallback cb) { socket.writeAll(buffer, count, std::move(cb)); }
 Corecat::Promise<std::size_t> TCPSocket::writeAllAsync(const void* buffer, std::size_t count) {
     
     Corecat::Promise<std::size_t> promise;
@@ -342,8 +191,8 @@ Corecat::Promise<std::size_t> TCPSocket::writeAllAsync(const void* buffer, std::
 TCPSocket::EndpointType TCPSocket::getRemoteEndpoint() {
     
     sockaddr_storage saddr;
-    int saddrSize = sizeof(saddr);
-    if(::getpeername(socket, reinterpret_cast<sockaddr*>(&saddr), &saddrSize)) throw Corecat::IOException("::getpeername failed");
+    std::size_t saddrSize = sizeof(saddr);
+    socket.getRemoteEndpoint(&saddr, &saddrSize);
     switch(saddr.ss_family) {
     case AF_INET: {
         
@@ -366,8 +215,8 @@ TCPSocket::EndpointType TCPSocket::getRemoteEndpoint() {
     
 }
 
-TCPSocket::NativeHandleType TCPSocket::getHandle() { return socket; }
-void TCPSocket::setHandle(NativeHandleType socket_) { socket = socket_; if(executor) executor->attachHandle(HANDLE(socket)); }
+TCPSocket::NativeHandleType TCPSocket::getHandle() { return socket.getHandle(); }
+void TCPSocket::setHandle(NativeHandleType handle) { socket.setHandle(handle); }
 
 }
 }

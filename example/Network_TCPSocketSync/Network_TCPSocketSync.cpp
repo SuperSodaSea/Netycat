@@ -37,27 +37,35 @@ using namespace Cats::Netycat;
 
 void runServer() {
     
-    TCPServer server;
-    server.listen(12345);
-    TCPSocket socket;
-    server.accept(socket);
-    const char data[] = "Hello, Netycat!";
-    std::uint8_t size = sizeof(data) - 1;
-    (std::cout << "Server write: ").write(data, size) << std::endl;
-    socket.writeAll(&size, 1);
-    socket.writeAll(data, size);
+    try {
+        
+        TCPServer server;
+        server.listen(12345);
+        TCPSocket socket;
+        server.accept(socket);
+        const char data[] = "Hello, Netycat!";
+        std::uint8_t size = sizeof(data) - 1;
+        (std::cout << "Server write: ").write(data, size) << std::endl;
+        socket.writeAll(&size, 1);
+        socket.writeAll(data, size);
+        
+    } catch(std::exception& e) { std::cerr << e.what() << std::endl; }
     
 }
 
 void runClient() {
     
-    TCPSocket socket;
-    socket.connect(IPv4Address::getLoopback(), 12345);
-    std::uint8_t size;
-    char buffer[256];
-    socket.readAll(&size, 1);
-    socket.readAll(buffer, size);
-    (std::cout << "Client read: ").write(buffer, size) << std::endl;
+    try {
+        
+        TCPSocket socket;
+        socket.connect(IPv4Address::getLoopback(), 12345);
+        std::uint8_t size;
+        char buffer[256];
+        socket.readAll(&size, 1);
+        socket.readAll(buffer, size);
+        (std::cout << "Client read: ").write(buffer, size) << std::endl;
+        
+    } catch(std::exception& e) { std::cerr << e.what() << std::endl; }
     
 }
 

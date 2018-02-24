@@ -38,41 +38,40 @@ inline namespace TCP {
 
 class TCPServer {
     
-private:
-    
-    using Byte = Corecat::Byte;
-    
 public:
     
-    using NativeHandleType = SOCKET;
+    using NativeHandleType = Impl::Socket::NativeHandleType;
     using EndpointType = TCPEndpoint;
     
-    using AcceptCallback = std::function<void(const Corecat::ExceptionWrapper&)>;
+    using AcceptCallback = Impl::Socket::AcceptCallback;
     
 private:
     
-    IOExecutor* executor = nullptr;
-    NativeHandleType socket = 0;
-    IPAddress::Type type;
+    Impl::Socket socket;
     
 public:
     
     TCPServer();
-    TCPServer(IOExecutor& executor_);
-    TCPServer(NativeHandleType socket_);
-    TCPServer(IOExecutor& executor_, NativeHandleType socket_);
+    TCPServer(IOExecutor& executor);
+    TCPServer(NativeHandleType handle);
+    TCPServer(IOExecutor& executor, NativeHandleType handle);
     TCPServer(const TCPServer& src) = delete;
     ~TCPServer();
     
     TCPServer& operator =(const TCPServer& src) = delete;
     
-    void listen(const EndpointType& endpoint, std::size_t backlog = 128);
-    void listen(std::uint16_t port, std::size_t backlog = 128);
-    void listen(const IPAddress& address, std::uint16_t port, std::size_t backlog = 128);
+    void close();
+    
+    void listen(const IPAddress& address, std::uint16_t port, std::size_t backlog = Impl::Socket::DEFAULT_BACKLOG);
+    void listen(std::uint16_t port, std::size_t backlog = Impl::Socket::DEFAULT_BACKLOG);
+    void listen(const EndpointType& endpoint, std::size_t backlog = Impl::Socket::DEFAULT_BACKLOG);
+    
     void accept(TCPSocket& s);
     void accept(TCPSocket& s, AcceptCallback cb);
     Corecat::Promise<> acceptAsync(TCPSocket& s);
-    void close();
+    
+    NativeHandleType getHandle();
+    void setHandle(NativeHandleType handle);
     
 };
 

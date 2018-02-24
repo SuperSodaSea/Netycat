@@ -34,135 +34,58 @@ namespace Netycat {
 inline namespace Network {
 inline namespace TCP {
 
-TCPServer::TCPServer() {
-    
-    WSA::init();
-    
-}
-TCPServer::TCPServer(IOExecutor& executor_) : executor(&executor_) {
-    
-    WSA::init();
-    
-}
-TCPServer::TCPServer(NativeHandleType socket_) : socket(socket_) {}
-TCPServer::TCPServer(IOExecutor& executor_, NativeHandleType socket_) : executor(&executor_), socket(socket_) {}
-TCPServer::~TCPServer() {
-    
-    if(socket) close();
-    
-}
+TCPServer::TCPServer() {}
+TCPServer::TCPServer(IOExecutor& executor) : socket(executor) {}
+TCPServer::TCPServer(NativeHandleType handle) : socket(handle) {}
+TCPServer::TCPServer(IOExecutor& executor, NativeHandleType handle) : socket(executor, handle) {}
+TCPServer::~TCPServer() {}
 
-void TCPServer::listen(const EndpointType& endpoint, std::size_t backlog) {
+void TCPServer::close() { socket.close(); }
+
+void TCPServer::listen(const IPAddress& address, std::uint16_t port, std::size_t backlog) {
     
-    SOCKET sock;
-    sockaddr_storage saddr = {};
-    switch(endpoint.getAddress().getType()) {
+    sockaddr_storage saddr;
+    std::size_t saddrSize;
+    switch(address.getType()) {
     case IPAddress::Type::IPv4: {
         
-        sock = ::socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-        if(sock == INVALID_SOCKET) throw Corecat::IOException("::socket failed");
-        std::uint32_t addr = endpoint.getAddress().getIPv4();
-        std::uint16_t port = endpoint.getPort();
+        socket.socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+        std::uint32_t addr = address.getIPv4();
         sockaddr_in* saddr4 = reinterpret_cast<sockaddr_in*>(&saddr);
+        *saddr4 = {};
         saddr4->sin_family = AF_INET;
         saddr4->sin_port = Corecat::convertNativeToBig(port);
         saddr4->sin_addr.s_addr = Corecat::convertNativeToBig(addr);
+        saddrSize = sizeof(sockaddr_in);
         break;
         
     }
     case IPAddress::Type::IPv6: {
         
-        sock = ::socket(PF_INET6, SOCK_STREAM, IPPROTO_TCP);
-        if(sock == INVALID_SOCKET) throw Corecat::IOException("::socket failed");
-        const std::uint8_t* addr = endpoint.getAddress().getIPv6().getData();
-        std::uint32_t scope = endpoint.getAddress().getIPv6().getScope();
-        std::uint16_t port = endpoint.getPort();
+        socket.socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
+        const std::uint8_t* addr = address.getIPv6().getData();
+        std::uint32_t scope = address.getIPv6().getScope();
         sockaddr_in6* saddr6 = reinterpret_cast<sockaddr_in6*>(&saddr);
+        *saddr6 = {};
         saddr6->sin6_family = AF_INET6;
         saddr6->sin6_port = Corecat::convertNativeToBig(port);
         saddr6->sin6_scope_id = Corecat::convertNativeToBig(scope);
         std::memcpy(saddr6->sin6_addr.s6_addr, addr, 16);
+        saddrSize = sizeof(sockaddr_in6);
         break;
         
     }
     default: throw Corecat::InvalidArgumentException("Invalid endpoint type");
     }
-    if(::bind(sock, reinterpret_cast<sockaddr*>(&saddr), sizeof(saddr))) {
-        
-        ::closesocket(sock);
-        throw Corecat::IOException("::bind failed");
-        
-    }
-    if(::listen(sock, int(backlog))) {
-        
-        ::closesocket(sock);
-        throw Corecat::IOException("::listen failed");
-        
-    }
-    socket = sock;
-    type = endpoint.getAddress().getType();
-    if(executor) executor->attachHandle(HANDLE(socket));
+    socket.bind(&saddr, saddrSize);
+    socket.listen(backlog);
     
 }
-void TCPServer::listen(std::uint16_t port, std::size_t backlog) {
-    
-    listen({IPv4Address::getAny(), port}, backlog);
-    
-}
-void TCPServer::listen(const IPAddress& address, std::uint16_t port, std::size_t backlog) {
-    
-    listen({address, port}, backlog);
-    
-}
-void TCPServer::accept(TCPSocket& s) {
-    
-    sockaddr_storage saddr;
-    int saddrSize = sizeof(saddr);
-    SOCKET sock = ::accept(socket, reinterpret_cast<sockaddr*>(&saddr), &saddrSize);
-    if(sock == INVALID_SOCKET) throw Corecat::IOException("::accept failed");
-    s.setHandle(sock);
-    
-}
-void TCPServer::accept(TCPSocket& s, AcceptCallback cb) {
-#if defined(NETYCAT_IOEXECUTOR_IOCP)
-    SOCKET sock;
-    switch(type) {
-    case IPAddress::Type::IPv4: {
-        
-        sock = ::socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-        if(sock == INVALID_SOCKET) { cb(Corecat::IOException("::socket failed")); return; }
-        break;
-        
-    }
-    case IPAddress::Type::IPv6: {
-        
-        sock = ::socket(PF_INET6, SOCK_STREAM, IPPROTO_TCP);
-        if(sock == INVALID_SOCKET) { cb(Corecat::IOException("::socket failed")); return; }
-        break;
-        
-    }
-    default: cb(Corecat::InvalidArgumentException("Invalid endpoint type")); return;
-    }
-    auto buffer = new Corecat::Byte[(sizeof(sockaddr_storage) + 16) * 2];
-    auto overlapped = executor->createOverlapped([=, &s](auto& e, auto) {
-        
-        delete[] buffer;
-        if(e) ::closesocket(sock);
-        else s.setHandle(sock);
-        cb(e);
-        
-    });
-    if(!WSA::AcceptEx(socket, sock, buffer, 0, sizeof(sockaddr_storage) + 16, sizeof(sockaddr_storage) + 16, nullptr, overlapped)
-        && ::GetLastError() != ERROR_IO_PENDING) {
-        
-        delete[] buffer;
-        executor->destroyOverlapped(overlapped);
-        ::closesocket(sock);
-        cb(Corecat::IOException("::AccpetEx failed"));
-        
-    }
-#endif
-}
+void TCPServer::listen(std::uint16_t port, std::size_t backlog) { listen(IPv4Address::getAny(), port, backlog); }
+void TCPServer::listen(const EndpointType& endpoint, std::size_t backlog) { listen(endpoint.getAddress(), endpoint.getPort(), backlog); }
+
+void TCPServer::accept(TCPSocket& s) { socket.accept(s.socket); }
+void TCPServer::accept(TCPSocket& s, AcceptCallback cb) { socket.accept(s.socket, std::move(cb)); }
 Corecat::Promise<> TCPServer::acceptAsync(TCPSocket& s) {
     
     Corecat::Promise<> promise;
@@ -172,12 +95,9 @@ Corecat::Promise<> TCPServer::acceptAsync(TCPSocket& s) {
     return promise;
     
 }
-void TCPServer::close() {
-    
-    ::closesocket(socket);
-    socket = 0;
-    
-}
+
+TCPServer::NativeHandleType TCPServer::getHandle() { return socket.getHandle(); }
+void TCPServer::setHandle(NativeHandleType handle) { socket.setHandle(handle); }
 
 }
 }
