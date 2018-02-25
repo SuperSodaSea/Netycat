@@ -27,11 +27,9 @@
 #include <iostream>
 #include <thread>
 
-#include "Cats/Corecat/Util.hpp"
 #include "Cats/Netycat/Network.hpp"
 
 
-using namespace Cats::Corecat;
 using namespace Cats::Netycat;
 
 
@@ -39,15 +37,18 @@ void runServer() {
     
     try {
         
+        char buffer[256];
+        std::uint8_t size;
+        
         TCPServer server;
         server.listen(12345);
         TCPSocket socket;
         server.accept(socket);
-        const char data[] = "Hello, Netycat!";
-        std::uint8_t size = sizeof(data) - 1;
-        (std::cout << "Server write: ").write(data, size) << std::endl;
+        socket.readAll(&size, 1);
+        socket.readAll(buffer, size);
+        (std::cout << "Server read & write: ").write(buffer, size) << std::endl;
         socket.writeAll(&size, 1);
-        socket.writeAll(data, size);
+        socket.writeAll(buffer, size);
         
     } catch(std::exception& e) { std::cerr << e.what() << std::endl; }
     
@@ -57,10 +58,14 @@ void runClient() {
     
     try {
         
+        char buffer[256] = "Hello, Netycat!";
+        std::uint8_t size = std::uint8_t(std::strlen(buffer));
+        
         TCPSocket socket;
         socket.connect(IPv4Address::getLoopback(), 12345);
-        std::uint8_t size;
-        char buffer[256];
+        std::cout << "Client write: " << buffer << std::endl;
+        socket.writeAll(&size, 1);
+        socket.writeAll(buffer, size);
         socket.readAll(&size, 1);
         socket.readAll(buffer, size);
         (std::cout << "Client read: ").write(buffer, size) << std::endl;
@@ -74,10 +79,8 @@ int main() {
     
     try {
         
-        std::thread serverThread(runServer);
-        std::thread clientThread(runClient);
-        serverThread.join();
-        clientThread.join();
+        std::thread(runServer).detach();
+        runClient();
         
     } catch(std::exception& e) { std::cerr << e.what() << std::endl; return 1; }
     

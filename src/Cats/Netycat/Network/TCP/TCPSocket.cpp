@@ -192,7 +192,7 @@ TCPSocket::EndpointType TCPSocket::getRemoteEndpoint() {
     
     sockaddr_storage saddr;
     std::size_t saddrSize = sizeof(saddr);
-    socket.getRemoteEndpoint(&saddr, &saddrSize);
+    socket.getRemoteEndpoint(&saddr, saddrSize);
     switch(saddr.ss_family) {
     case AF_INET: {
         

@@ -43,8 +43,8 @@ private:
     IOExecutor& executor;
     TCPServer server{executor};
     TCPSocket socket{executor};
-    const char* data = "Hello, Netycat!";
-    std::uint8_t size = std::uint8_t(std::strlen(data));
+    char buffer[256];
+    std::uint8_t size;
     
 public:
     
@@ -58,9 +58,11 @@ public:
                 
                 server.listen(12345);
                 CORECAT_AWAIT(server.acceptAsync(socket));
-                (std::cout << "Server write: ").write(data, size) << std::endl;
+                CORECAT_AWAIT(socket.readAllAsync(&size, 1));
+                CORECAT_AWAIT(socket.readAllAsync(buffer, size));
+                (std::cout << "Server read & write: ").write(buffer, size) << std::endl;
                 CORECAT_AWAIT(socket.writeAllAsync(&size, 1));
-                CORECAT_AWAIT(socket.writeAllAsync(data, size));
+                CORECAT_AWAIT(socket.writeAllAsync(buffer, size));
                 
             }
             
@@ -76,8 +78,8 @@ private:
     
     IOExecutor& executor;
     TCPSocket socket{executor};
-    char data[256];
-    std::uint8_t size;
+    char buffer[256] = "Hello, Netycat!";
+    std::uint8_t size = std::uint8_t(std::strlen(buffer));
     
 public:
     
@@ -90,9 +92,12 @@ public:
             CORECAT_COROUTINE {
                 
                 CORECAT_AWAIT(socket.connectAsync(IPv4Address::getLoopback(), 12345));
+                std::cout << "Client write: " << buffer << std::endl;
+                CORECAT_AWAIT(socket.writeAllAsync(&size, 1));
+                CORECAT_AWAIT(socket.writeAllAsync(buffer, size));
                 CORECAT_AWAIT(socket.readAllAsync(&size, 1));
-                CORECAT_AWAIT(socket.readAllAsync(data, size));
-                (std::cout << "Client read: ").write(data, size) << std::endl;
+                CORECAT_AWAIT(socket.readAllAsync(buffer, size));
+                (std::cout << "Client read: ").write(buffer, size) << std::endl;
                 
             }
             

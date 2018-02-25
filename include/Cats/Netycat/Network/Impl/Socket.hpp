@@ -102,13 +102,17 @@ public:
     std::size_t readAll(void* buffer, std::size_t count);
     void readAll(void* buffer, std::size_t count, ReadCallback cb);
     
+    std::size_t readFrom(void* buffer, std::size_t count, void* address, std::size_t& size);
+    
     std::size_t write(const void* buffer, std::size_t count);
     void write(const void* buffer, std::size_t count, WriteCallback cb);
     
     std::size_t writeAll(const void* buffer, std::size_t count);
     void writeAll(const void* buffer, std::size_t count, WriteCallback cb);
     
-    void getRemoteEndpoint(void* address, std::size_t* size);
+    std::size_t writeTo(const void* buffer, std::size_t count, const void* address, std::size_t size);
+    
+    void getRemoteEndpoint(void* address, std::size_t& size);
     
     NativeHandleType getHandle();
     void setHandle(NativeHandleType handle_);

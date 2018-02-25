@@ -205,6 +205,16 @@ void Socket::readAll(void* buffer, std::size_t count, ReadCallback cb) {
     
 }
 
+std::size_t Socket::readFrom(void* buffer, std::size_t count, void* address, std::size_t& size) {
+    
+    int s = int(size);
+    std::ptrdiff_t ret = ::recvfrom(handle, static_cast<char*>(buffer), int(count), 0, reinterpret_cast<sockaddr*>(address), &s);
+    if(ret < 0) throw Corecat::IOException("::recvfrom failed");
+    size = s;
+    return ret;
+    
+}
+
 std::size_t Socket::write(const void* buffer, std::size_t count) {
     
     std::ptrdiff_t ret = ::send(handle, static_cast<const char*>(buffer), int(count), 0);
@@ -255,11 +265,19 @@ void Socket::writeAll(const void* buffer, std::size_t count, WriteCallback cb) {
     
 }
 
-void Socket::getRemoteEndpoint(void* address, std::size_t* size) {
+std::size_t Socket::writeTo(const void* buffer, std::size_t count, const void* address, std::size_t size) {
     
-    int len = int(*size);
+    std::ptrdiff_t ret = ::sendto(handle, static_cast<const char*>(buffer), int(count), 0, reinterpret_cast<const sockaddr*>(address), int(size));
+    if(ret < 0) throw Corecat::IOException("::sendto failed");
+    return ret;
+    
+}
+
+void Socket::getRemoteEndpoint(void* address, std::size_t& size) {
+    
+    int len = int(size);
     if(::getpeername(handle, reinterpret_cast<sockaddr*>(address), &len)) throw Corecat::IOException("::getpeername failed");
-    *size = len;
+    size = len;
     
 }
 

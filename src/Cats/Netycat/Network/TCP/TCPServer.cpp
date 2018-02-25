@@ -42,6 +42,7 @@ TCPServer::~TCPServer() {}
 
 void TCPServer::close() { socket.close(); }
 
+void TCPServer::listen(std::uint16_t port, std::size_t backlog) { listen(IPv4Address::getAny(), port, backlog); }
 void TCPServer::listen(const IPAddress& address, std::uint16_t port, std::size_t backlog) {
     
     sockaddr_storage saddr;
@@ -81,7 +82,6 @@ void TCPServer::listen(const IPAddress& address, std::uint16_t port, std::size_t
     socket.listen(backlog);
     
 }
-void TCPServer::listen(std::uint16_t port, std::size_t backlog) { listen(IPv4Address::getAny(), port, backlog); }
 void TCPServer::listen(const EndpointType& endpoint, std::size_t backlog) { listen(endpoint.getAddress(), endpoint.getPort(), backlog); }
 
 void TCPServer::accept(TCPSocket& s) { socket.accept(s.socket); }

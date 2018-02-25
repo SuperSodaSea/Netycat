@@ -62,8 +62,8 @@ public:
     
     void close();
     
-    void listen(const IPAddress& address, std::uint16_t port, std::size_t backlog = Impl::Socket::DEFAULT_BACKLOG);
     void listen(std::uint16_t port, std::size_t backlog = Impl::Socket::DEFAULT_BACKLOG);
+    void listen(const IPAddress& address, std::uint16_t port, std::size_t backlog = Impl::Socket::DEFAULT_BACKLOG);
     void listen(const EndpointType& endpoint, std::size_t backlog = Impl::Socket::DEFAULT_BACKLOG);
     
     void accept(TCPSocket& s);

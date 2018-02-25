@@ -55,7 +55,8 @@ public:
     IPAddress& getAddress() noexcept { return address; }
     void setAddress(const IPAddress& address_) noexcept { address = address_; }
     
-    std::uint16_t getPort() const noexcept { return port; }
+    const std::uint16_t& getPort() const noexcept { return port; }
+    std::uint16_t& getPort() noexcept { return port; }
     void setPort(std::uint16_t port_) noexcept { port = port_; }
     
 };
