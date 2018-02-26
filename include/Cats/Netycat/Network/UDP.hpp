@@ -29,6 +29,7 @@
 
 
 #include "UDP/UDPEndpoint.hpp"
+#include "UDP/UDPSocket.hpp"
 
 
 #endif

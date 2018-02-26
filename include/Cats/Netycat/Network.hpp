@@ -30,6 +30,7 @@
 
 #include "Network/IP.hpp"
 #include "Network/TCP.hpp"
+#include "Network/UDP.hpp"
 
 
 #endif

@@ -23,6 +23,7 @@ aux_source_directory("src/Cats/Netycat/Filesystem" SRC)
 aux_source_directory("src/Cats/Netycat/Network/IP" SRC)
 aux_source_directory("src/Cats/Netycat/Network/Impl" SRC)
 aux_source_directory("src/Cats/Netycat/Network/TCP" SRC)
+aux_source_directory("src/Cats/Netycat/Network/UDP" SRC)
 if(WIN32)
     aux_source_directory("src/Cats/Netycat/Network/Win32" SRC)
 endif()
@@ -36,7 +37,8 @@ set(EXAMPLE
     Filesystem_MappedFile
     Network_IPResolver
     Network_TCPSocketAsync
-    Network_TCPSocketSync)
+    Network_TCPSocketSync
+    Network_UDPSocketSync)
 
 foreach(example ${EXAMPLE})
     add_executable(${example} example/${example}/${example}.cpp)
