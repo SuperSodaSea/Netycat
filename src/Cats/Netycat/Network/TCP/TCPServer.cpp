@@ -46,7 +46,7 @@ void TCPServer::listen(std::uint16_t port, std::size_t backlog) { listen(IPv4Add
 void TCPServer::listen(const IPAddress& address, std::uint16_t port, std::size_t backlog) {
     
     sockaddr_storage saddr;
-    std::size_t saddrSize;
+    socklen_t saddrSize;
     switch(address.getType()) {
     case IPAddress::Type::IPv4: {
         

@@ -54,10 +54,10 @@ public:
     using NativeHandleType = Impl::Socket::NativeHandleType;
     using EndpointType = TCPEndpoint;
     
-    using ConnectCallback = Impl::Socket::ConnectCallback;
+    using ConnectCallback = std::function<void(const Corecat::ExceptionWrapper&)>;
     
-    using ReadCallback = Impl::Socket::ReadCallback;
-    using WriteCallback = Impl::Socket::WriteCallback;
+    using ReadCallback = std::function<void(const Corecat::ExceptionWrapper&, std::size_t)>;
+    using WriteCallback = std::function<void(const Corecat::ExceptionWrapper&, std::size_t)>;
     
 private:
     

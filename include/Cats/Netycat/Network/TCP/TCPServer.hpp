@@ -43,7 +43,7 @@ public:
     using NativeHandleType = Impl::Socket::NativeHandleType;
     using EndpointType = TCPEndpoint;
     
-    using AcceptCallback = Impl::Socket::AcceptCallback;
+    using AcceptCallback = std::function<void(const Corecat::ExceptionWrapper&)>;
     
 private:
     

@@ -86,10 +86,10 @@ public:
     
     void socket(int family_, int type_, int protocol_);
     
-    void bind(const void* address, std::size_t size);
+    void bind(const void* address, socklen_t size);
     
-    void connect(const void* address, std::size_t size);
-    void connect(const void* address, std::size_t size, ConnectCallback cb);
+    void connect(const void* address, socklen_t size);
+    void connect(const void* address, socklen_t size, ConnectCallback cb);
     
     void listen(std::size_t backlog = DEFAULT_BACKLOG);
     
@@ -102,7 +102,8 @@ public:
     std::size_t readAll(void* buffer, std::size_t count);
     void readAll(void* buffer, std::size_t count, ReadCallback cb);
     
-    std::size_t readFrom(void* buffer, std::size_t count, void* address, std::size_t& size);
+    std::size_t readFrom(void* buffer, std::size_t count, void* address, socklen_t& size);
+    void readFrom(void* buffer, std::size_t count, void* address, socklen_t& size, ReadCallback cb);
     
     std::size_t write(const void* buffer, std::size_t count);
     void write(const void* buffer, std::size_t count, WriteCallback cb);
@@ -110,9 +111,10 @@ public:
     std::size_t writeAll(const void* buffer, std::size_t count);
     void writeAll(const void* buffer, std::size_t count, WriteCallback cb);
     
-    std::size_t writeTo(const void* buffer, std::size_t count, const void* address, std::size_t size);
+    std::size_t writeTo(const void* buffer, std::size_t count, const void* address, socklen_t size);
+    void writeTo(const void* buffer, std::size_t count, const void* address, socklen_t size, WriteCallback cb);
     
-    void getRemoteEndpoint(void* address, std::size_t& size);
+    void getRemoteEndpoint(void* address, socklen_t& size);
     
     NativeHandleType getHandle();
     void setHandle(NativeHandleType handle_);

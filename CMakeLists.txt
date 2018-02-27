@@ -38,6 +38,7 @@ set(EXAMPLE
     Network_IPResolver
     Network_TCPSocketAsync
     Network_TCPSocketSync
+    Network_UDPSocketAsync
     Network_UDPSocketSync)
 
 foreach(example ${EXAMPLE})

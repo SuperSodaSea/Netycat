@@ -37,12 +37,12 @@ void runServer() {
     
     try {
         
+        TCPServer server;
+        TCPSocket socket;
         char buffer[256];
         std::uint8_t size;
         
-        TCPServer server;
         server.listen(12345);
-        TCPSocket socket;
         server.accept(socket);
         socket.readAll(&size, 1);
         socket.readAll(buffer, size);
@@ -58,10 +58,10 @@ void runClient() {
     
     try {
         
+        TCPSocket socket;
         char buffer[256] = "Hello, Netycat!";
         std::uint8_t size = std::uint8_t(std::strlen(buffer));
         
-        TCPSocket socket;
         socket.connect(IPv4Address::getLoopback(), 12345);
         std::cout << "Client write: " << buffer << std::endl;
         socket.writeAll(&size, 1);

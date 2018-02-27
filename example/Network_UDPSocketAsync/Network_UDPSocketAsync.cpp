@@ -40,10 +40,10 @@ class Server : public Coroutine<Server> {
 private:
     
     IOExecutor& executor;
-    TCPServer server{executor};
-    TCPSocket socket{executor};
+    UDPSocket socket{executor};
+    UDPEndpoint endpoint;
     char buffer[256];
-    std::uint8_t size;
+    std::size_t size;
     
 public:
     
@@ -55,13 +55,10 @@ public:
             
             CORECAT_COROUTINE {
                 
-                server.listen(12345);
-                CORECAT_AWAIT(server.acceptAsync(socket));
-                CORECAT_AWAIT(socket.readAllAsync(&size, 1));
-                CORECAT_AWAIT(socket.readAllAsync(buffer, size));
+                socket.bind(12345);
+                CORECAT_AWAIT_FOR(socket.readFromAsync(buffer, sizeof(buffer), endpoint), size);
                 (std::cout << "Server read & write: ").write(buffer, size) << std::endl;
-                CORECAT_AWAIT(socket.writeAllAsync(&size, 1));
-                CORECAT_AWAIT(socket.writeAllAsync(buffer, size));
+                CORECAT_AWAIT(socket.writeToAsync(buffer, size, endpoint));
                 
             }
             
@@ -76,9 +73,10 @@ class Client : public Coroutine<Client> {
 private:
     
     IOExecutor& executor;
-    TCPSocket socket{executor};
+    UDPSocket socket{executor};
+    UDPEndpoint endpoint{IPv4Address::getLoopback(), 12345};
     char buffer[256] = "Hello, Netycat!";
-    std::uint8_t size = std::uint8_t(std::strlen(buffer));
+    std::size_t size = std::strlen(buffer);
     
 public:
     
@@ -90,12 +88,10 @@ public:
             
             CORECAT_COROUTINE {
                 
-                CORECAT_AWAIT(socket.connectAsync(IPv4Address::getLoopback(), 12345));
+                socket.bind();
                 std::cout << "Client write: " << buffer << std::endl;
-                CORECAT_AWAIT(socket.writeAllAsync(&size, 1));
-                CORECAT_AWAIT(socket.writeAllAsync(buffer, size));
-                CORECAT_AWAIT(socket.readAllAsync(&size, 1));
-                CORECAT_AWAIT(socket.readAllAsync(buffer, size));
+                CORECAT_AWAIT(socket.writeToAsync(buffer, size, endpoint));
+                CORECAT_AWAIT_FOR(socket.readFromAsync(buffer, sizeof(buffer), endpoint), size);
                 (std::cout << "Client read: ").write(buffer, size) << std::endl;
                 
             }

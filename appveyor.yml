@@ -35,3 +35,5 @@ test_script:
 - build\%CONFIGURATION%\Network_IPResolver.exe github.com
 - build\%CONFIGURATION%\Network_TCPSocketAsync.exe
 - build\%CONFIGURATION%\Network_TCPSocketSync.exe
+- build\%CONFIGURATION%\Network_UDPSocketAsync.exe
+- build\%CONFIGURATION%\Network_UDPSocketSync.exe

@@ -71,20 +71,20 @@ void Socket::socket(int family_, int type_, int protocol_) {
     
 }
 
-void Socket::bind(const void* address, std::size_t size) {
+void Socket::bind(const void* address, socklen_t size) {
     
-    if(::bind(handle, reinterpret_cast<const sockaddr*>(address), int(size)))
+    if(::bind(handle, reinterpret_cast<const sockaddr*>(address), size))
         throw Corecat::IOException("::bind failed");
     
 }
 
-void Socket::connect(const void* address, std::size_t size) {
+void Socket::connect(const void* address, socklen_t size) {
     
-    if(::connect(handle, reinterpret_cast<const sockaddr*>(address), int(size)))
+    if(::connect(handle, reinterpret_cast<const sockaddr*>(address), size))
         throw Corecat::IOException("::connect failed");
     
 }
-void Socket::connect(const void* address, std::size_t size, ConnectCallback cb) {
+void Socket::connect(const void* address, socklen_t size, ConnectCallback cb) {
 #if defined(NETYCAT_IOEXECUTOR_IOCP)
     if(!family && !type && !protocol) getSocketInfo();
     sockaddr_storage saddr = {};
@@ -116,7 +116,7 @@ void Socket::listen(std::size_t backlog) {
 void Socket::accept(Socket& s) {
     
     sockaddr_storage saddr;
-    int saddrSize = sizeof(saddr);
+    socklen_t saddrSize = sizeof(saddr);
     SOCKET sock = ::accept(handle, reinterpret_cast<sockaddr*>(&saddr), &saddrSize);
     if(sock == INVALID_SOCKET) throw Corecat::IOException("::accept failed");
     s.setHandle(sock);
@@ -205,14 +205,26 @@ void Socket::readAll(void* buffer, std::size_t count, ReadCallback cb) {
     
 }
 
-std::size_t Socket::readFrom(void* buffer, std::size_t count, void* address, std::size_t& size) {
+std::size_t Socket::readFrom(void* buffer, std::size_t count, void* address, socklen_t& size) {
     
-    int s = int(size);
-    std::ptrdiff_t ret = ::recvfrom(handle, static_cast<char*>(buffer), int(count), 0, reinterpret_cast<sockaddr*>(address), &s);
+    std::ptrdiff_t ret = ::recvfrom(handle, static_cast<char*>(buffer), int(count), 0, reinterpret_cast<sockaddr*>(address), &size);
     if(ret < 0) throw Corecat::IOException("::recvfrom failed");
-    size = s;
     return ret;
     
+}
+void Socket::readFrom(void* buffer, std::size_t count, void* address, socklen_t& size, ReadCallback cb) {
+#if defined(NETYCAT_IOEXECUTOR_IOCP)
+    auto overlapped = executor->createOverlapped([=](auto& e, auto count) { cb(e, count); });
+    WSABUF buf = {u_long(count), static_cast<char*>(buffer)};
+    DWORD flags = 0;
+    if(::WSARecvFrom(handle, &buf, 1, nullptr, &flags, reinterpret_cast<sockaddr*>(address), &size, overlapped, nullptr)
+        && ::WSAGetLastError() != ERROR_IO_PENDING) {
+        
+        executor->destroyOverlapped(overlapped);
+        cb(Corecat::IOException("::WSARecvFrom failed"), 0);
+        
+    }
+#endif
 }
 
 std::size_t Socket::write(const void* buffer, std::size_t count) {
@@ -265,19 +277,31 @@ void Socket::writeAll(const void* buffer, std::size_t count, WriteCallback cb) {
     
 }
 
-std::size_t Socket::writeTo(const void* buffer, std::size_t count, const void* address, std::size_t size) {
+std::size_t Socket::writeTo(const void* buffer, std::size_t count, const void* address, socklen_t size) {
     
-    std::ptrdiff_t ret = ::sendto(handle, static_cast<const char*>(buffer), int(count), 0, reinterpret_cast<const sockaddr*>(address), int(size));
+    std::ptrdiff_t ret = ::sendto(handle, static_cast<const char*>(buffer), int(count), 0, reinterpret_cast<const sockaddr*>(address), size);
     if(ret < 0) throw Corecat::IOException("::sendto failed");
     return ret;
     
 }
+void Socket::writeTo(const void* buffer, std::size_t count, const void* address, socklen_t size, WriteCallback cb) {
+#if defined(NETYCAT_IOEXECUTOR_IOCP)
+    auto overlapped = executor->createOverlapped([=](auto& e, auto count) { cb(e, count); });
+    WSABUF buf = {u_long(count), static_cast<char*>(const_cast<void*>(buffer))};
+    if(::WSASendTo(handle, &buf, 1, nullptr, 0, reinterpret_cast<const sockaddr*>(address), size, overlapped, nullptr)
+        && ::WSAGetLastError() != ERROR_IO_PENDING) {
+        
+        executor->destroyOverlapped(overlapped);
+        cb(Corecat::IOException("::WSASendTo failed"), 0);
+        
+    }
+#endif
+}
 
-void Socket::getRemoteEndpoint(void* address, std::size_t& size) {
+void Socket::getRemoteEndpoint(void* address, socklen_t& size) {
     
-    int len = int(size);
-    if(::getpeername(handle, reinterpret_cast<sockaddr*>(address), &len)) throw Corecat::IOException("::getpeername failed");
-    size = len;
+    if(::getpeername(handle, reinterpret_cast<sockaddr*>(address), &size))
+        throw Corecat::IOException("::getpeername failed");
     
 }
 

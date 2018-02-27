@@ -52,10 +52,8 @@ public:
     using NativeHandleType = Impl::Socket::NativeHandleType;
     using EndpointType = UDPEndpoint;
     
-    using ConnectCallback = Impl::Socket::ConnectCallback;
-    
-    using ReadCallback = Impl::Socket::ReadCallback;
-    using WriteCallback = Impl::Socket::WriteCallback;
+    using ReadCallback = std::function<void(const Corecat::ExceptionWrapper&, std::size_t)>;
+    using WriteCallback = std::function<void(const Corecat::ExceptionWrapper&, std::size_t)>;
     
 private:
     
@@ -80,9 +78,17 @@ public:
     
     std::size_t readFrom(void* buffer, std::size_t count, IPAddress& address, std::uint16_t& port);
     std::size_t readFrom(void* buffer, std::size_t count, EndpointType& endpoint);
+    void readFrom(void* buffer, std::size_t count, IPAddress& address, std::uint16_t& port, ReadCallback cb);
+    void readFrom(void* buffer, std::size_t count, EndpointType& endpoint, ReadCallback cb);
+    Corecat::Promise<std::size_t> readFromAsync(void* buffer, std::size_t count, IPAddress& address, std::uint16_t& port);
+    Corecat::Promise<std::size_t> readFromAsync(void* buffer, std::size_t count, EndpointType& endpoint);
     
     std::size_t writeTo(const void* buffer, std::size_t count, const IPAddress& address, std::uint16_t port);
     std::size_t writeTo(const void* buffer, std::size_t count, const EndpointType& endpoint);
+    void writeTo(const void* buffer, std::size_t count, const IPAddress& address, std::uint16_t port, WriteCallback cb);
+    void writeTo(const void* buffer, std::size_t count, const EndpointType& endpoint, WriteCallback cb);
+    Corecat::Promise<std::size_t> writeToAsync(const void* buffer, std::size_t count, const IPAddress& address, std::uint16_t port);
+    Corecat::Promise<std::size_t> writeToAsync(const void* buffer, std::size_t count, const EndpointType& endpoint);
     
     NativeHandleType getHandle();
     void setHandle(NativeHandleType handle);

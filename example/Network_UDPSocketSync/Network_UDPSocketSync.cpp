@@ -37,11 +37,11 @@ void runServer() {
     
     try {
         
+        UDPSocket socket;
+        UDPEndpoint endpoint;
         char buffer[256];
         std::size_t size;
         
-        UDPSocket socket;
-        UDPEndpoint endpoint;
         socket.bind(12345);
         size = socket.readFrom(buffer, sizeof(buffer), endpoint);
         (std::cout << "Server read & write: ").write(buffer, size) << std::endl;
@@ -55,11 +55,11 @@ void runClient() {
     
     try {
         
+        UDPSocket socket;
+        UDPEndpoint endpoint(IPv4Address::getLoopback(), 12345);
         char buffer[256] = "Hello, Netycat!";
         std::size_t size = std::strlen(buffer);
         
-        UDPSocket socket;
-        UDPEndpoint endpoint(IPv4Address::getLoopback(), 12345);
         socket.bind();
         std::cout << "Client write: " << buffer << std::endl;
         socket.writeTo(buffer, size, endpoint);

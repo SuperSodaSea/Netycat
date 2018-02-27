@@ -45,7 +45,7 @@ void TCPSocket::close() { socket.close(); }
 void TCPSocket::connect(const IPAddress& address, std::uint16_t port) {
     
     sockaddr_storage saddr;
-    std::size_t saddrSize;
+    socklen_t saddrSize;
     switch(address.getType()) {
     case IPAddress::Type::IPv4: {
         
@@ -85,7 +85,7 @@ void TCPSocket::connect(const EndpointType& endpoint) { connect(endpoint.getAddr
 void TCPSocket::connect(const IPAddress& address, std::uint16_t port, ConnectCallback cb) {
     
     sockaddr_storage saddr;
-    std::size_t saddrSize;
+    socklen_t saddrSize;
     switch(address.getType()) {
     case IPAddress::Type::IPv4: {
         
@@ -191,7 +191,7 @@ Corecat::Promise<std::size_t> TCPSocket::writeAllAsync(const void* buffer, std::
 TCPSocket::EndpointType TCPSocket::getRemoteEndpoint() {
     
     sockaddr_storage saddr;
-    std::size_t saddrSize = sizeof(saddr);
+    socklen_t saddrSize = sizeof(saddr);
     socket.getRemoteEndpoint(&saddr, saddrSize);
     switch(saddr.ss_family) {
     case AF_INET: {
