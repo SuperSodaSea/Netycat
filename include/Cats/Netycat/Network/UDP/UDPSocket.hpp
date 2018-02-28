@@ -53,6 +53,7 @@ public:
     using EndpointType = UDPEndpoint;
     
     using ReadCallback = std::function<void(const Corecat::ExceptionWrapper&, std::size_t)>;
+    using ReadFromCallback = std::function<void(const Corecat::ExceptionWrapper&, std::size_t, const EndpointType&)>;
     using WriteCallback = std::function<void(const Corecat::ExceptionWrapper&, std::size_t)>;
     
 private:
@@ -76,10 +77,13 @@ public:
     void bind(const IPAddress& address, std::uint16_t port);
     void bind(const EndpointType& endpoint);
     
+    std::pair<std::size_t, EndpointType> readFrom(void* buffer, std::size_t count);
     std::size_t readFrom(void* buffer, std::size_t count, IPAddress& address, std::uint16_t& port);
     std::size_t readFrom(void* buffer, std::size_t count, EndpointType& endpoint);
+    void readFrom(void* buffer, std::size_t count, ReadFromCallback cb);
     void readFrom(void* buffer, std::size_t count, IPAddress& address, std::uint16_t& port, ReadCallback cb);
     void readFrom(void* buffer, std::size_t count, EndpointType& endpoint, ReadCallback cb);
+    Corecat::Promise<std::pair<std::size_t, EndpointType>> readFromAsync(void* buffer, std::size_t count);
     Corecat::Promise<std::size_t> readFromAsync(void* buffer, std::size_t count, IPAddress& address, std::uint16_t& port);
     Corecat::Promise<std::size_t> readFromAsync(void* buffer, std::size_t count, EndpointType& endpoint);
     

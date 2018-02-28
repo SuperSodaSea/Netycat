@@ -83,6 +83,13 @@ void UDPSocket::bind(const IPAddress& address, std::uint16_t port) {
 }
 void UDPSocket::bind(const EndpointType& endpoint) { bind(endpoint.getAddress(), endpoint.getPort()); }
 
+std::pair<std::size_t, UDPSocket::EndpointType> UDPSocket::readFrom(void* buffer, std::size_t count) {
+    
+    EndpointType endpoint;
+    std::size_t ret = readFrom(buffer, count, endpoint.getAddress(), endpoint.getPort());
+    return {ret, endpoint};
+    
+}
 std::size_t UDPSocket::readFrom(void* buffer, std::size_t count, IPAddress& address, std::uint16_t& port) {
     
     sockaddr_storage saddr;
@@ -115,7 +122,7 @@ std::size_t UDPSocket::readFrom(void* buffer, std::size_t count, EndpointType& e
     return readFrom(buffer, count, endpoint.getAddress(), endpoint.getPort());
     
 }
-void UDPSocket::readFrom(void* buffer, std::size_t count, IPAddress& address, std::uint16_t& port, ReadCallback cb) {
+void UDPSocket::readFrom(void* buffer, std::size_t count, ReadFromCallback cb) {
     
     struct AddressBuffer {
         
@@ -124,12 +131,12 @@ void UDPSocket::readFrom(void* buffer, std::size_t count, IPAddress& address, st
         
     };
     auto addressBuffer = new AddressBuffer;
-    socket.readFrom(buffer, count, &addressBuffer->saddr, addressBuffer->saddrSize, [=, &address, &port](auto& e, auto count) {
+    socket.readFrom(buffer, count, &addressBuffer->saddr, addressBuffer->saddrSize, [=, cb = std::move(cb)](auto& e, auto count) {
         
         if(e) {
             
             delete addressBuffer;
-            cb(e, count);
+            cb(e, count, {});
             return;
             
         }
@@ -137,23 +144,36 @@ void UDPSocket::readFrom(void* buffer, std::size_t count, IPAddress& address, st
         case AF_INET: {
             
             sockaddr_in* saddr4 = reinterpret_cast<sockaddr_in*>(&addressBuffer->saddr);
-            address = Corecat::convertBigToNative(saddr4->sin_addr.s_addr);
-            port = Corecat::convertBigToNative(saddr4->sin_port);
+            cb({}, count, {IPv4Address(Corecat::convertBigToNative(saddr4->sin_addr.s_addr)), Corecat::convertBigToNative(saddr4->sin_port)});
             break;
             
         }
         case AF_INET6: {
             
             sockaddr_in6* saddr6 = reinterpret_cast<sockaddr_in6*>(&addressBuffer->saddr);
-            address = {saddr6->sin6_addr.s6_addr, ::ntohl(saddr6->sin6_scope_id)};
-            port = Corecat::convertBigToNative(saddr6->sin6_port);
+            cb({}, count, {IPv6Address(saddr6->sin6_addr.s6_addr, ::ntohl(saddr6->sin6_scope_id)), Corecat::convertBigToNative(saddr6->sin6_port)});
             break;
             
         }
-        default: delete addressBuffer, cb(Corecat::InvalidArgumentException("Invalid endpoint"), 0); return;
+        default: delete addressBuffer, cb(Corecat::InvalidArgumentException("Invalid endpoint"), 0, {}); return;
         }
         delete addressBuffer;
-        cb(e, count);
+        
+    });
+    
+}
+void UDPSocket::readFrom(void* buffer, std::size_t count, IPAddress& address, std::uint16_t& port, ReadCallback cb) {
+    
+    readFrom(buffer, count, [&, cb = std::move(cb)](auto& e, auto count, auto& endpoint) {
+        
+        if(e) cb(e, count);
+        else {
+            
+            address = endpoint.getAddress();
+            port = endpoint.getPort();
+            cb({}, count);
+            
+        }
         
     });
     
@@ -161,6 +181,15 @@ void UDPSocket::readFrom(void* buffer, std::size_t count, IPAddress& address, st
 void UDPSocket::readFrom(void* buffer, std::size_t count, EndpointType& endpoint, ReadCallback cb) {
     
     return readFrom(buffer, count, endpoint.getAddress(), endpoint.getPort(), std::move(cb));
+    
+}
+Corecat::Promise<std::pair<std::size_t, UDPSocket::EndpointType>> UDPSocket::readFromAsync(void* buffer, std::size_t count) {
+    
+    Corecat::Promise<std::pair<std::size_t, EndpointType>> promise;
+    readFrom(buffer, count, [=](auto& e, auto count, auto& endpoint) {
+        e ? promise.reject(e) : promise.resolve(std::pair<std::size_t, UDPSocket::EndpointType>(count, endpoint));
+    });
+    return promise;
     
 }
 Corecat::Promise<std::size_t> UDPSocket::readFromAsync(void* buffer, std::size_t count, IPAddress& address, std::uint16_t& port) {

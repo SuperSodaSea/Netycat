@@ -56,7 +56,7 @@ public:
             CORECAT_COROUTINE {
                 
                 socket.bind(12345);
-                CORECAT_AWAIT_FOR(socket.readFromAsync(buffer, sizeof(buffer), endpoint), size);
+                CORECAT_AWAIT_FOR(socket.readFromAsync(buffer, sizeof(buffer)), std::tie(size, endpoint));
                 (std::cout << "Server read & write: ").write(buffer, size) << std::endl;
                 CORECAT_AWAIT(socket.writeToAsync(buffer, size, endpoint));
                 
@@ -91,7 +91,7 @@ public:
                 socket.bind();
                 std::cout << "Client write: " << buffer << std::endl;
                 CORECAT_AWAIT(socket.writeToAsync(buffer, size, endpoint));
-                CORECAT_AWAIT_FOR(socket.readFromAsync(buffer, sizeof(buffer), endpoint), size);
+                CORECAT_AWAIT_FOR(socket.readFromAsync(buffer, sizeof(buffer)), std::tie(size, endpoint));
                 (std::cout << "Client read: ").write(buffer, size) << std::endl;
                 
             }
