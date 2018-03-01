@@ -134,7 +134,8 @@ public:
         
     }
     
-    std::uint32_t getScope() const noexcept { return scope; }
+    const std::uint32_t& getScope() const noexcept { return scope; }
+    std::uint32_t& getScope() noexcept { return scope; }
     void setScope(std::uint32_t scope_) noexcept { scope = scope_; }
     
     String8 toString() const {
@@ -214,7 +215,9 @@ public:
     bool isIPv6() const noexcept { return type == Type::IPv6; }
     
     const IPv4Address& getIPv4() const { if(type != Type::IPv4) throw Corecat::InvalidArgumentException("Address is not IPv4"); return v4; }
+    IPv4Address& getIPv4() { if(type != Type::IPv4) throw Corecat::InvalidArgumentException("Address is not IPv4"); return v4; }
     const IPv6Address& getIPv6() const { if(type != Type::IPv6) throw Corecat::InvalidArgumentException("Address is not IPv6"); return v6; }
+    IPv6Address& getIPv6() { if(type != Type::IPv6) throw Corecat::InvalidArgumentException("Address is not IPv6"); return v6; }
     
     String8 toString() const {
         

@@ -30,7 +30,6 @@
 
 #include "TCPEndpoint.hpp"
 #include "../Impl/Socket.hpp"
-#include "../Win32/WSA.hpp"
 #include "../../IOExecutor.hpp"
 
 #include "Cats/Corecat/Util/Byte.hpp"

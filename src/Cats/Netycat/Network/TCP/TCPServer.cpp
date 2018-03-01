@@ -28,6 +28,8 @@
 
 #include "Cats/Corecat/Util/Endian.hpp"
 
+#include "Cats/Netycat/Network/Impl/Address.hpp"
+
 
 namespace Cats {
 namespace Netycat {
@@ -45,39 +47,14 @@ void TCPServer::close() { socket.close(); }
 void TCPServer::listen(std::uint16_t port, std::size_t backlog) { listen(IPv4Address::getAny(), port, backlog); }
 void TCPServer::listen(const IPAddress& address, std::uint16_t port, std::size_t backlog) {
     
-    sockaddr_storage saddr;
-    socklen_t saddrSize;
     switch(address.getType()) {
-    case IPAddress::Type::IPv4: {
-        
-        socket.socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-        std::uint32_t addr = address.getIPv4();
-        sockaddr_in* saddr4 = reinterpret_cast<sockaddr_in*>(&saddr);
-        *saddr4 = {};
-        saddr4->sin_family = AF_INET;
-        saddr4->sin_port = Corecat::convertNativeToBig(port);
-        saddr4->sin_addr.s_addr = Corecat::convertNativeToBig(addr);
-        saddrSize = sizeof(sockaddr_in);
-        break;
-        
+    case IPAddress::Type::IPv4: socket.socket(AF_INET, SOCK_STREAM, IPPROTO_TCP); break;
+    case IPAddress::Type::IPv6: socket.socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP); break;
+    default: throw Corecat::InvalidArgumentException("Invalid address type");
     }
-    case IPAddress::Type::IPv6: {
-        
-        socket.socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
-        const std::uint8_t* addr = address.getIPv6().getData();
-        std::uint32_t scope = address.getIPv6().getScope();
-        sockaddr_in6* saddr6 = reinterpret_cast<sockaddr_in6*>(&saddr);
-        *saddr6 = {};
-        saddr6->sin6_family = AF_INET6;
-        saddr6->sin6_port = Corecat::convertNativeToBig(port);
-        saddr6->sin6_scope_id = Corecat::convertNativeToBig(scope);
-        std::memcpy(saddr6->sin6_addr.s6_addr, addr, 16);
-        saddrSize = sizeof(sockaddr_in6);
-        break;
-        
-    }
-    default: throw Corecat::InvalidArgumentException("Invalid endpoint type");
-    }
+    sockaddr_storage saddr;
+    socklen_t saddrSize = sizeof(saddr);
+    Impl::toSockaddr(&saddr, saddrSize, address, port);
     socket.bind(&saddr, saddrSize);
     socket.listen(backlog);
     
