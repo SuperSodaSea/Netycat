@@ -52,9 +52,9 @@ public:
     using NativeHandleType = Impl::Socket::NativeHandleType;
     using EndpointType = UDPEndpoint;
     
-    using ReadCallback = std::function<void(const Corecat::ExceptionWrapper&, std::size_t)>;
-    using ReadFromCallback = std::function<void(const Corecat::ExceptionWrapper&, std::size_t, const EndpointType&)>;
-    using WriteCallback = std::function<void(const Corecat::ExceptionWrapper&, std::size_t)>;
+    using ReadCallback = std::function<void(const Corecat::ExceptionPtr&, std::size_t)>;
+    using ReadFromCallback = std::function<void(const Corecat::ExceptionPtr&, std::size_t, const EndpointType&)>;
+    using WriteCallback = std::function<void(const Corecat::ExceptionPtr&, std::size_t)>;
     
 private:
     

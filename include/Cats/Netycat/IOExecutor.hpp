@@ -37,7 +37,7 @@
 #include "Cats/Corecat/Concurrent/Promise.hpp"
 #include "Cats/Corecat/System/OS.hpp"
 #include "Cats/Corecat/Time/HighResolutionClock.hpp"
-#include "Cats/Corecat/Util/ExceptionWrapper.hpp"
+#include "Cats/Corecat/Util/ExceptionPtr.hpp"
 
 #if defined(CORECAT_OS_WINDOWS)
 #   include "Cats/Corecat/Win32/Handle.hpp"
@@ -55,7 +55,7 @@ class IOExecutor {
 #if defined(NETYCAT_IOEXECUTOR_IOCP)
 public:
     
-    using OverlappedCallback = std::function<void(const Corecat::ExceptionWrapper&, std::size_t)>;
+    using OverlappedCallback = std::function<void(const Corecat::ExceptionPtr&, std::size_t)>;
     struct Overlapped : public OVERLAPPED {
         
         OverlappedCallback cb;

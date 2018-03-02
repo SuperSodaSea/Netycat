@@ -47,7 +47,7 @@ private:
     
 public:
     
-    using ResolveCallback = std::function<void(const Corecat::ExceptionWrapper&, std::vector<IPAddress>)>;
+    using ResolveCallback = std::function<void(const Corecat::ExceptionPtr&, std::vector<IPAddress>)>;
     
 private:
     
@@ -62,7 +62,7 @@ public:
     SystemIPResolver& operator =(const SystemIPResolver& src) = delete;
     
     std::vector<IPAddress> resolve(const String8& name);
-    std::vector<IPAddress> resolve(const String8& name, Corecat::ExceptionWrapper& e);
+    std::vector<IPAddress> resolve(const String8& name, Corecat::ExceptionPtr& e);
     void resolve(const String8& name, ResolveCallback cb);
     Corecat::Promise<std::vector<IPAddress>> resolveAsync(const String8& name);
     

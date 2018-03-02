@@ -52,13 +52,13 @@ SystemIPResolver::SystemIPResolver(IOExecutor& executor_) : executor(&executor_)
 
 std::vector<IPAddress> SystemIPResolver::resolve(const String8& name) {
     
-    Corecat::ExceptionWrapper e;
+    Corecat::ExceptionPtr e;
     auto addressList = resolve(name, e);
     if(e) e.rethrow();
     return addressList;
     
 }
-std::vector<IPAddress> SystemIPResolver::resolve(const String8& name, Corecat::ExceptionWrapper& e) {
+std::vector<IPAddress> SystemIPResolver::resolve(const String8& name, Corecat::ExceptionPtr& e) {
     
     // TODO: Use GetAddrInfoW on Windows
     addrinfo hints;
@@ -113,7 +113,7 @@ void SystemIPResolver::resolve(const String8& name, ResolveCallback cb) {
     executor->beginWork();
     std::thread([=, cb = std::move(cb)] {
         
-        Corecat::ExceptionWrapper e;
+        Corecat::ExceptionPtr e;
         auto addressList = resolve(name, e);
         executor->execute([cb = std::move(cb), e = std::move(e), addressList = std::move(addressList)] { cb(e, std::move(addressList)); });
         executor->endWork();

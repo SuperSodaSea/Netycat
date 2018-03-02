@@ -89,7 +89,7 @@ void IOExecutor::run() {
             bool success = ::GetQueuedCompletionStatus(completionPort, &byteCount, &completionKey, &o, time);
             if(o) {
                 
-                Corecat::ExceptionWrapper e;
+                Corecat::ExceptionPtr e;
                 if(!success) e = Corecat::IOException("::GetQueuedCompletionStatus failed");
                 Overlapped* overlapped = static_cast<Overlapped*>(o);
                 overlapped->cb(e, byteCount);

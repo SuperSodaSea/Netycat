@@ -53,11 +53,11 @@ public:
     
     using NativeHandleType = SOCKET;
     
-    using AcceptCallback = std::function<void(const Corecat::ExceptionWrapper&)>;
-    using ConnectCallback = std::function<void(const Corecat::ExceptionWrapper&)>;
+    using AcceptCallback = std::function<void(const Corecat::ExceptionPtr&)>;
+    using ConnectCallback = std::function<void(const Corecat::ExceptionPtr&)>;
     
-    using ReadCallback = std::function<void(const Corecat::ExceptionWrapper&, std::size_t)>;
-    using WriteCallback = std::function<void(const Corecat::ExceptionWrapper&, std::size_t)>;
+    using ReadCallback = std::function<void(const Corecat::ExceptionPtr&, std::size_t)>;
+    using WriteCallback = std::function<void(const Corecat::ExceptionPtr&, std::size_t)>;
     
     static constexpr std::size_t DEFAULT_BACKLOG = 128;
     
