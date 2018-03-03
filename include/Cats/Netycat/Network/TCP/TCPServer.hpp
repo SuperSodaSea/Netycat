@@ -38,12 +38,20 @@ inline namespace TCP {
 
 class TCPServer {
     
+private:
+    
+    using ExceptionPtr = Corecat::ExceptionPtr;
+    template <typename T = void>
+    using Promise = Corecat::Promise<T>;
+    
 public:
     
     using NativeHandleType = Impl::Socket::NativeHandleType;
     using EndpointType = TCPEndpoint;
     
-    using AcceptCallback = std::function<void(const Corecat::ExceptionPtr&)>;
+    using AcceptCallback = std::function<void(const ExceptionPtr&)>;
+    
+    static constexpr std::size_t DEFAULT_BACKLOG = Impl::Socket::DEFAULT_BACKLOG;
     
 private:
     
@@ -60,18 +68,25 @@ public:
     
     TCPServer& operator =(const TCPServer& src) = delete;
     
-    void close();
+    void close() noexcept;
     
-    void listen(std::uint16_t port, std::size_t backlog = Impl::Socket::DEFAULT_BACKLOG);
-    void listen(const IPAddress& address, std::uint16_t port, std::size_t backlog = Impl::Socket::DEFAULT_BACKLOG);
-    void listen(const EndpointType& endpoint, std::size_t backlog = Impl::Socket::DEFAULT_BACKLOG);
+    void listen(std::uint16_t port, std::size_t backlog = DEFAULT_BACKLOG);
+    void listen(const IPAddress& address, std::uint16_t port, std::size_t backlog = DEFAULT_BACKLOG);
+    void listen(const EndpointType& endpoint, std::size_t backlog = DEFAULT_BACKLOG);
+    void listen(std::uint16_t port, ExceptionPtr& e) noexcept;
+    void listen(std::uint16_t port, std::size_t backlog, ExceptionPtr& e) noexcept;
+    void listen(const IPAddress& address, std::uint16_t port, ExceptionPtr& e) noexcept;
+    void listen(const IPAddress& address, std::uint16_t port, std::size_t backlog, ExceptionPtr& e) noexcept;
+    void listen(const EndpointType& endpoint, ExceptionPtr& e) noexcept;
+    void listen(const EndpointType& endpoint, std::size_t backlog, ExceptionPtr& e) noexcept;
     
     void accept(TCPSocket& s);
-    void accept(TCPSocket& s, AcceptCallback cb);
-    Corecat::Promise<> acceptAsync(TCPSocket& s);
+    void accept(TCPSocket& s, ExceptionPtr& e) noexcept;
+    void accept(TCPSocket& s, AcceptCallback cb) noexcept;
+    Promise<> acceptAsync(TCPSocket& s) noexcept;
     
-    NativeHandleType getHandle();
-    void setHandle(NativeHandleType handle);
+    NativeHandleType getHandle() noexcept;
+    void setHandle(NativeHandleType handle) noexcept;
     
 };
 

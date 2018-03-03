@@ -52,10 +52,16 @@ namespace Netycat {
 
 class IOExecutor {
     
+private:
+    
+    using ExceptionPtr = Corecat::ExceptionPtr;
+    template <typename T = void>
+    using Promise = Corecat::Promise<T>;
+    
 #if defined(NETYCAT_IOEXECUTOR_IOCP)
 public:
     
-    using OverlappedCallback = std::function<void(const Corecat::ExceptionPtr&, std::size_t)>;
+    using OverlappedCallback = std::function<void(const ExceptionPtr&, std::size_t)>;
     struct Overlapped : public OVERLAPPED {
         
         OverlappedCallback cb;
@@ -104,7 +110,7 @@ public:
     void endWork() { --overlappedCount; }
     
     void wait(double time, WaitCallback cb);
-    Corecat::Promise<> waitAsync(double time);
+    Promise<> waitAsync(double time);
     
     void run();
     

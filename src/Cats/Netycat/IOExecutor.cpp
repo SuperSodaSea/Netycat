@@ -59,7 +59,7 @@ void IOExecutor::wait(double time, WaitCallback cb) {
 }
 Corecat::Promise<> IOExecutor::waitAsync(double time) {
     
-    Corecat::Promise<> promise;
+    Promise<> promise;
     wait(time, [=]() { promise.resolve(); });
     return promise;
     

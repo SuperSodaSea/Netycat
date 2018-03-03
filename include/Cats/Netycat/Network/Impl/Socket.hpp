@@ -48,16 +48,17 @@ class Socket {
 private:
     
     using Byte = Corecat::Byte;
+    using ExceptionPtr = Corecat::ExceptionPtr;
     
 public:
     
     using NativeHandleType = SOCKET;
     
-    using AcceptCallback = std::function<void(const Corecat::ExceptionPtr&)>;
-    using ConnectCallback = std::function<void(const Corecat::ExceptionPtr&)>;
+    using AcceptCallback = std::function<void(const ExceptionPtr&)>;
+    using ConnectCallback = std::function<void(const ExceptionPtr&)>;
     
-    using ReadCallback = std::function<void(const Corecat::ExceptionPtr&, std::size_t)>;
-    using WriteCallback = std::function<void(const Corecat::ExceptionPtr&, std::size_t)>;
+    using ReadCallback = std::function<void(const ExceptionPtr&, std::size_t)>;
+    using WriteCallback = std::function<void(const ExceptionPtr&, std::size_t)>;
     
     static constexpr std::size_t DEFAULT_BACKLOG = 128;
     
@@ -82,50 +83,51 @@ public:
     
     Socket& operator =(const Socket& src) = delete;
     
-    void close();
+    void close() noexcept;
     
-    void socket(int family_, int type_, int protocol_);
+    void socket(int family_, int type_, int protocol_, ExceptionPtr& e) noexcept;
     
-    void bind(const void* address, socklen_t size);
+    void bind(const void* address, socklen_t size, ExceptionPtr& e) noexcept;
     
-    void connect(const void* address, socklen_t size);
-    void connect(const void* address, socklen_t size, ConnectCallback cb);
+    void connect(const void* address, socklen_t size, ExceptionPtr& e) noexcept;
+    void connect(const void* address, socklen_t size, ConnectCallback cb) noexcept;
     
-    void listen(std::size_t backlog = DEFAULT_BACKLOG);
+    void listen(ExceptionPtr& e) noexcept;
+    void listen(std::size_t backlog, ExceptionPtr& e) noexcept;
     
-    void accept(Socket& s);
-    void accept(Socket& s, AcceptCallback cb);
+    void accept(Socket& s, ExceptionPtr& e) noexcept;
+    void accept(Socket& s, AcceptCallback cb) noexcept;
     
-    std::size_t read(void* buffer, std::size_t count);
-    void read(void* buffer, std::size_t count, ReadCallback cb);
+    std::size_t read(void* buffer, std::size_t count, ExceptionPtr& e) noexcept;
+    void read(void* buffer, std::size_t count, ReadCallback cb) noexcept;
     
-    std::size_t readAll(void* buffer, std::size_t count);
-    void readAll(void* buffer, std::size_t count, ReadCallback cb);
+    std::size_t readAll(void* buffer, std::size_t count, ExceptionPtr& e) noexcept;
+    void readAll(void* buffer, std::size_t count, ReadCallback cb) noexcept;
     
-    std::size_t readFrom(void* buffer, std::size_t count, void* address, socklen_t& size);
-    void readFrom(void* buffer, std::size_t count, void* address, socklen_t& size, ReadCallback cb);
+    std::size_t readFrom(void* buffer, std::size_t count, void* address, socklen_t& size, ExceptionPtr& e) noexcept;
+    void readFrom(void* buffer, std::size_t count, void* address, socklen_t& size, ReadCallback cb) noexcept;
     
-    std::size_t write(const void* buffer, std::size_t count);
-    void write(const void* buffer, std::size_t count, WriteCallback cb);
+    std::size_t write(const void* buffer, std::size_t count, ExceptionPtr& e) noexcept;
+    void write(const void* buffer, std::size_t count, WriteCallback cb) noexcept;
     
-    std::size_t writeAll(const void* buffer, std::size_t count);
-    void writeAll(const void* buffer, std::size_t count, WriteCallback cb);
+    std::size_t writeAll(const void* buffer, std::size_t count, ExceptionPtr& e) noexcept;
+    void writeAll(const void* buffer, std::size_t count, WriteCallback cb) noexcept;
     
-    std::size_t writeTo(const void* buffer, std::size_t count, const void* address, socklen_t size);
-    void writeTo(const void* buffer, std::size_t count, const void* address, socklen_t size, WriteCallback cb);
+    std::size_t writeTo(const void* buffer, std::size_t count, const void* address, socklen_t size, ExceptionPtr& e) noexcept;
+    void writeTo(const void* buffer, std::size_t count, const void* address, socklen_t size, WriteCallback cb) noexcept;
     
-    void getRemoteEndpoint(void* address, socklen_t& size);
+    void getRemoteEndpoint(void* address, socklen_t& size, ExceptionPtr& e) noexcept;
     
-    NativeHandleType getHandle();
-    void setHandle(NativeHandleType handle_);
+    NativeHandleType getHandle() noexcept;
+    void setHandle(NativeHandleType handle_) noexcept;
     
 private:
     
-    void readAllImpl(Byte* buffer, std::size_t n, ReadCallback cb, std::size_t count);
-    void writeAllImpl(const Byte* buffer, std::size_t n, WriteCallback cb, std::size_t count);
+    void readAllImpl(Byte* buffer, std::size_t n, ReadCallback cb, std::size_t count) noexcept;
+    void writeAllImpl(const Byte* buffer, std::size_t n, WriteCallback cb, std::size_t count) noexcept;
     
 #if defined(NETYCAT_IOEXECUTOR_IOCP)
-    void getSocketInfo();
+    void getSocketInfo(ExceptionPtr& e) noexcept;
 #endif
     
 };

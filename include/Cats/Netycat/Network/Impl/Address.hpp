@@ -28,6 +28,9 @@
 #define CATS_NETYCAT_NETWORK_IMPL_ADDRESS_HPP
 
 
+#include "Cats/Corecat/System/OS.hpp"
+#include "Cats/Corecat/Util/ExceptionPtr.hpp"
+
 #include "../IP/IPAddress.hpp"
 
 #if defined(CORECAT_OS_WINDOWS)
@@ -40,13 +43,15 @@ namespace Netycat {
 inline namespace Network {
 namespace Impl {
 
-inline void fromSockaddr(const void* saddr, socklen_t saddrSize, IPAddress& address, std::uint16_t& port) {
+inline void fromSockaddr(const void* saddr, socklen_t saddrSize, IPAddress& address, std::uint16_t& port, Corecat::ExceptionPtr& e) noexcept {
     
-    if(saddrSize < socklen_t(sizeof(sockaddr))) throw Corecat::InvalidArgumentException("Invalid sockaddr size");
+    if(saddrSize < socklen_t(sizeof(sockaddr)))
+        { e = Corecat::InvalidArgumentException("Invalid sockaddr size"); return; }
     switch(reinterpret_cast<const sockaddr*>(saddr)->sa_family) {
     case AF_INET: {
         
-        if(saddrSize < socklen_t(sizeof(sockaddr_in))) throw Corecat::InvalidArgumentException("Invalid sockaddr size");
+        if(saddrSize < socklen_t(sizeof(sockaddr_in)))
+            { e = Corecat::InvalidArgumentException("Invalid sockaddr size"); return; }
         auto saddr4 = reinterpret_cast<const sockaddr_in*>(saddr);
         address = IPv4Address(Corecat::convertBigToNative(saddr4->sin_addr.s_addr));
         port = Corecat::convertBigToNative(saddr4->sin_port);
@@ -55,23 +60,25 @@ inline void fromSockaddr(const void* saddr, socklen_t saddrSize, IPAddress& addr
     }
     case AF_INET6: {
         
-        if(saddrSize < socklen_t(sizeof(sockaddr_in6))) throw Corecat::InvalidArgumentException("Invalid sockaddr size");
+        if(saddrSize < socklen_t(sizeof(sockaddr_in6)))
+            { e = Corecat::InvalidArgumentException("Invalid sockaddr size"); return; }
         auto saddr6 = reinterpret_cast<const sockaddr_in6*>(saddr);
         address = IPv6Address(saddr6->sin6_addr.s6_addr, Corecat::convertBigToNative(saddr6->sin6_scope_id));
         port = Corecat::convertBigToNative(saddr6->sin6_port);
         break;
         
     }
-    default: throw Corecat::InvalidArgumentException("Invalid address type");
+    default: e = Corecat::InvalidArgumentException("Invalid address type"); return;
     }
     
 }
-inline void toSockaddr(void* saddr, socklen_t& saddrSize, const IPAddress& address, std::uint16_t port) {
+inline void toSockaddr(void* saddr, socklen_t& saddrSize, const IPAddress& address, std::uint16_t port, Corecat::ExceptionPtr& e) noexcept {
     
     switch(address.getType()) {
     case IPAddress::Type::IPv4: {
         
-        if(saddrSize < socklen_t(sizeof(sockaddr_in))) throw Corecat::InvalidArgumentException("Invalid sockaddr size");
+        if(saddrSize < socklen_t(sizeof(sockaddr_in)))
+            { e = Corecat::InvalidArgumentException("Invalid sockaddr size"); return; }
         std::uint32_t addr = address.getIPv4();
         sockaddr_in* saddr4 = reinterpret_cast<sockaddr_in*>(saddr);
         *saddr4 = {};
@@ -84,7 +91,8 @@ inline void toSockaddr(void* saddr, socklen_t& saddrSize, const IPAddress& addre
     }
     case IPAddress::Type::IPv6: {
         
-        if(saddrSize < socklen_t(sizeof(sockaddr_in6))) throw Corecat::InvalidArgumentException("Invalid sockaddr size");
+        if(saddrSize < socklen_t(sizeof(sockaddr_in6)))
+            { e = Corecat::InvalidArgumentException("Invalid sockaddr size"); return; }
         const std::uint8_t* addr = address.getIPv6().getData();
         std::uint32_t scope = address.getIPv6().getScope();
         sockaddr_in6* saddr6 = reinterpret_cast<sockaddr_in6*>(saddr);
@@ -97,7 +105,7 @@ inline void toSockaddr(void* saddr, socklen_t& saddrSize, const IPAddress& addre
         break;
         
     }
-    default: throw Corecat::InvalidArgumentException("Invalid address type");
+    default: e = Corecat::InvalidArgumentException("Invalid address type"); return;
     }
     
 }

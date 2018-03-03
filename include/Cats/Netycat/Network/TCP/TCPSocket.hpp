@@ -32,8 +32,6 @@
 #include "../Impl/Socket.hpp"
 #include "../../IOExecutor.hpp"
 
-#include "Cats/Corecat/Util/Byte.hpp"
-
 
 namespace Cats {
 namespace Netycat {
@@ -46,17 +44,19 @@ private:
     
     friend class TCPServer;
     
-    using Byte = Corecat::Byte;
+    using ExceptionPtr = Corecat::ExceptionPtr;
+    template <typename T = void>
+    using Promise = Corecat::Promise<T>;
     
 public:
     
     using NativeHandleType = Impl::Socket::NativeHandleType;
     using EndpointType = TCPEndpoint;
     
-    using ConnectCallback = std::function<void(const Corecat::ExceptionPtr&)>;
+    using ConnectCallback = std::function<void(const ExceptionPtr&)>;
     
-    using ReadCallback = std::function<void(const Corecat::ExceptionPtr&, std::size_t)>;
-    using WriteCallback = std::function<void(const Corecat::ExceptionPtr&, std::size_t)>;
+    using ReadCallback = std::function<void(const ExceptionPtr&, std::size_t)>;
+    using WriteCallback = std::function<void(const ExceptionPtr&, std::size_t)>;
     
 private:
     
@@ -73,35 +73,42 @@ public:
     
     TCPSocket& operator =(const TCPSocket& src) = delete;
     
-    void close();
+    void close() noexcept;
     
     void connect(const IPAddress& address, std::uint16_t port);
     void connect(const EndpointType& endpoint);
-    void connect(const IPAddress& address, std::uint16_t port, ConnectCallback cb);
-    void connect(const EndpointType& endpoint, ConnectCallback cb);
-    Corecat::Promise<> connectAsync(const IPAddress& address, std::uint16_t port);
-    Corecat::Promise<> connectAsync(const EndpointType& endpoint);
+    void connect(const IPAddress& address, std::uint16_t port, ExceptionPtr& e) noexcept;
+    void connect(const EndpointType& endpoint, ExceptionPtr& e) noexcept;
+    void connect(const IPAddress& address, std::uint16_t port, ConnectCallback cb) noexcept;
+    void connect(const EndpointType& endpoint, ConnectCallback cb) noexcept;
+    Promise<> connectAsync(const IPAddress& address, std::uint16_t port) noexcept;
+    Promise<> connectAsync(const EndpointType& endpoint) noexcept;
     
     std::size_t read(void* buffer, std::size_t count);
-    void read(void* buffer, std::size_t count, ReadCallback cb);
-    Corecat::Promise<std::size_t> readAsync(void* buffer, std::size_t count);
+    std::size_t read(void* buffer, std::size_t count, ExceptionPtr& e) noexcept;
+    void read(void* buffer, std::size_t count, ReadCallback cb) noexcept;
+    Promise<std::size_t> readAsync(void* buffer, std::size_t count) noexcept;
     
     std::size_t readAll(void* buffer, std::size_t count);
-    void readAll(void* buffer, std::size_t count, ReadCallback cb);
-    Corecat::Promise<std::size_t> readAllAsync(void* buffer, std::size_t count);
+    std::size_t readAll(void* buffer, std::size_t count, ExceptionPtr& e) noexcept;
+    void readAll(void* buffer, std::size_t count, ReadCallback cb) noexcept;
+    Promise<std::size_t> readAllAsync(void* buffer, std::size_t count) noexcept;
     
     std::size_t write(const void* buffer, std::size_t count);
-    void write(const void* buffer, std::size_t count, WriteCallback cb);
-    Corecat::Promise<std::size_t> writeAsync(const void* buffer, std::size_t count);
+    std::size_t write(const void* buffer, std::size_t count, ExceptionPtr& e) noexcept;
+    void write(const void* buffer, std::size_t count, WriteCallback cb) noexcept;
+    Promise<std::size_t> writeAsync(const void* buffer, std::size_t count) noexcept;
     
     std::size_t writeAll(const void* buffer, std::size_t count);
-    void writeAll(const void* buffer, std::size_t count, WriteCallback cb);
-    Corecat::Promise<std::size_t> writeAllAsync(const void* buffer, std::size_t count);
+    std::size_t writeAll(const void* buffer, std::size_t count, ExceptionPtr& e) noexcept;
+    void writeAll(const void* buffer, std::size_t count, WriteCallback cb) noexcept;
+    Promise<std::size_t> writeAllAsync(const void* buffer, std::size_t count) noexcept;
     
     EndpointType getRemoteEndpoint();
+    EndpointType getRemoteEndpoint(ExceptionPtr& e) noexcept;
     
-    NativeHandleType getHandle();
-    void setHandle(NativeHandleType handle);
+    NativeHandleType getHandle() noexcept;
+    void setHandle(NativeHandleType handle) noexcept;
     
 };
 

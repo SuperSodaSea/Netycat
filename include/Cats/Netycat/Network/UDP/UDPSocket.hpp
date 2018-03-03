@@ -33,8 +33,6 @@
 #include "../Win32/WSA.hpp"
 #include "../../IOExecutor.hpp"
 
-#include "Cats/Corecat/Util/Byte.hpp"
-
 
 namespace Cats {
 namespace Netycat {
@@ -45,16 +43,18 @@ class UDPSocket {
     
 private:
     
-    using Byte = Corecat::Byte;
+    using ExceptionPtr = Corecat::ExceptionPtr;
+    template <typename T = void>
+    using Promise = Corecat::Promise<T>;
     
 public:
     
     using NativeHandleType = Impl::Socket::NativeHandleType;
     using EndpointType = UDPEndpoint;
     
-    using ReadCallback = std::function<void(const Corecat::ExceptionPtr&, std::size_t)>;
-    using ReadFromCallback = std::function<void(const Corecat::ExceptionPtr&, std::size_t, const EndpointType&)>;
-    using WriteCallback = std::function<void(const Corecat::ExceptionPtr&, std::size_t)>;
+    using ReadCallback = std::function<void(const ExceptionPtr&, std::size_t)>;
+    using ReadFromCallback = std::function<void(const ExceptionPtr&, std::size_t, const EndpointType&)>;
+    using WriteCallback = std::function<void(const ExceptionPtr&, std::size_t)>;
     
 private:
     
@@ -71,31 +71,40 @@ public:
     
     UDPSocket& operator =(const UDPSocket& src) = delete;
     
-    void close();
+    void close() noexcept;
     
     void bind(std::uint16_t port = 0);
     void bind(const IPAddress& address, std::uint16_t port);
     void bind(const EndpointType& endpoint);
+    void bind(ExceptionPtr& e) noexcept;
+    void bind(std::uint16_t port, ExceptionPtr& e) noexcept;
+    void bind(const IPAddress& address, std::uint16_t port, ExceptionPtr& e) noexcept;
+    void bind(const EndpointType& endpoint, ExceptionPtr& e) noexcept;
     
     std::pair<std::size_t, EndpointType> readFrom(void* buffer, std::size_t count);
     std::size_t readFrom(void* buffer, std::size_t count, IPAddress& address, std::uint16_t& port);
     std::size_t readFrom(void* buffer, std::size_t count, EndpointType& endpoint);
-    void readFrom(void* buffer, std::size_t count, ReadFromCallback cb);
-    void readFrom(void* buffer, std::size_t count, IPAddress& address, std::uint16_t& port, ReadCallback cb);
-    void readFrom(void* buffer, std::size_t count, EndpointType& endpoint, ReadCallback cb);
-    Corecat::Promise<std::pair<std::size_t, EndpointType>> readFromAsync(void* buffer, std::size_t count);
-    Corecat::Promise<std::size_t> readFromAsync(void* buffer, std::size_t count, IPAddress& address, std::uint16_t& port);
-    Corecat::Promise<std::size_t> readFromAsync(void* buffer, std::size_t count, EndpointType& endpoint);
+    std::pair<std::size_t, EndpointType> readFrom(void* buffer, std::size_t count, ExceptionPtr& e) noexcept;
+    std::size_t readFrom(void* buffer, std::size_t count, IPAddress& address, std::uint16_t& port, ExceptionPtr& e) noexcept;
+    std::size_t readFrom(void* buffer, std::size_t count, EndpointType& endpoint, ExceptionPtr& e) noexcept;
+    void readFrom(void* buffer, std::size_t count, ReadFromCallback cb) noexcept;
+    void readFrom(void* buffer, std::size_t count, IPAddress& address, std::uint16_t& port, ReadCallback cb) noexcept;
+    void readFrom(void* buffer, std::size_t count, EndpointType& endpoint, ReadCallback cb) noexcept;
+    Promise<std::pair<std::size_t, EndpointType>> readFromAsync(void* buffer, std::size_t count) noexcept;
+    Promise<std::size_t> readFromAsync(void* buffer, std::size_t count, IPAddress& address, std::uint16_t& port) noexcept;
+    Promise<std::size_t> readFromAsync(void* buffer, std::size_t count, EndpointType& endpoint) noexcept;
     
     std::size_t writeTo(const void* buffer, std::size_t count, const IPAddress& address, std::uint16_t port);
     std::size_t writeTo(const void* buffer, std::size_t count, const EndpointType& endpoint);
-    void writeTo(const void* buffer, std::size_t count, const IPAddress& address, std::uint16_t port, WriteCallback cb);
-    void writeTo(const void* buffer, std::size_t count, const EndpointType& endpoint, WriteCallback cb);
-    Corecat::Promise<std::size_t> writeToAsync(const void* buffer, std::size_t count, const IPAddress& address, std::uint16_t port);
-    Corecat::Promise<std::size_t> writeToAsync(const void* buffer, std::size_t count, const EndpointType& endpoint);
+    std::size_t writeTo(const void* buffer, std::size_t count, const IPAddress& address, std::uint16_t port, ExceptionPtr& e) noexcept;
+    std::size_t writeTo(const void* buffer, std::size_t count, const EndpointType& endpoint, ExceptionPtr& e) noexcept;
+    void writeTo(const void* buffer, std::size_t count, const IPAddress& address, std::uint16_t port, WriteCallback cb) noexcept;
+    void writeTo(const void* buffer, std::size_t count, const EndpointType& endpoint, WriteCallback cb) noexcept;
+    Promise<std::size_t> writeToAsync(const void* buffer, std::size_t count, const IPAddress& address, std::uint16_t port) noexcept;
+    Promise<std::size_t> writeToAsync(const void* buffer, std::size_t count, const EndpointType& endpoint) noexcept;
     
-    NativeHandleType getHandle();
-    void setHandle(NativeHandleType handle);
+    NativeHandleType getHandle() noexcept;
+    void setHandle(NativeHandleType handle) noexcept;
     
 };
 
