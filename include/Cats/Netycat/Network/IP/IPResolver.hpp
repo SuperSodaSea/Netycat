@@ -39,15 +39,18 @@ namespace Netycat {
 inline namespace Network {
 inline namespace IP {
 
-class SystemIPResolver {
+class IPResolver {
     
 private:
     
     using String8 = Corecat::String8;
+    using ExceptionPtr = Corecat::ExceptionPtr;
+    template <typename T = void>
+    using Promise = Corecat::Promise<T>;
     
 public:
     
-    using ResolveCallback = std::function<void(const Corecat::ExceptionPtr&, std::vector<IPAddress>)>;
+    using ResolveCallback = std::function<void(const ExceptionPtr&, std::vector<IPAddress>)>;
     
 private:
     
@@ -55,16 +58,16 @@ private:
     
 public:
     
-    SystemIPResolver();
-    SystemIPResolver(IOExecutor& executor_);
-    SystemIPResolver(const SystemIPResolver& src) = delete;
+    IPResolver();
+    IPResolver(IOExecutor& executor_);
+    IPResolver(const IPResolver& src) = delete;
     
-    SystemIPResolver& operator =(const SystemIPResolver& src) = delete;
+    IPResolver& operator =(const IPResolver& src) = delete;
     
     std::vector<IPAddress> resolve(const String8& name);
     std::vector<IPAddress> resolve(const String8& name, Corecat::ExceptionPtr& e);
     void resolve(const String8& name, ResolveCallback cb);
-    Corecat::Promise<std::vector<IPAddress>> resolveAsync(const String8& name);
+    Promise<std::vector<IPAddress>> resolveAsync(const String8& name);
     
 };
 

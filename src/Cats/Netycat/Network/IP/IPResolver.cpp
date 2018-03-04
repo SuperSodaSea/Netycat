@@ -39,18 +39,18 @@ namespace Netycat {
 inline namespace Network {
 inline namespace IP {
 
-SystemIPResolver::SystemIPResolver() {
+IPResolver::IPResolver() {
     
     WSA::init();
     
 }
-SystemIPResolver::SystemIPResolver(IOExecutor& executor_) : executor(&executor_) {
+IPResolver::IPResolver(IOExecutor& executor_) : executor(&executor_) {
     
     WSA::init();
     
 }
 
-std::vector<IPAddress> SystemIPResolver::resolve(const String8& name) {
+std::vector<IPAddress> IPResolver::resolve(const String8& name) {
     
     Corecat::ExceptionPtr e;
     auto addressList = resolve(name, e);
@@ -58,7 +58,7 @@ std::vector<IPAddress> SystemIPResolver::resolve(const String8& name) {
     return addressList;
     
 }
-std::vector<IPAddress> SystemIPResolver::resolve(const String8& name, Corecat::ExceptionPtr& e) {
+std::vector<IPAddress> IPResolver::resolve(const String8& name, Corecat::ExceptionPtr& e) {
     
     // TODO: Use GetAddrInfoW on Windows
     addrinfo hints;
@@ -108,7 +108,7 @@ std::vector<IPAddress> SystemIPResolver::resolve(const String8& name, Corecat::E
     return addressList;
     
 }
-void SystemIPResolver::resolve(const String8& name, ResolveCallback cb) {
+void IPResolver::resolve(const String8& name, ResolveCallback cb) {
     
     executor->beginWork();
     std::thread([=, cb = std::move(cb)] {
@@ -121,9 +121,9 @@ void SystemIPResolver::resolve(const String8& name, ResolveCallback cb) {
     }).detach();
     
 }
-Corecat::Promise<std::vector<IPAddress>> SystemIPResolver::resolveAsync(const String8& name) {
+Corecat::Promise<std::vector<IPAddress>> IPResolver::resolveAsync(const String8& name) {
     
-    Corecat::Promise<std::vector<IPAddress>> promise;
+    Promise<std::vector<IPAddress>> promise;
     resolve(name, [=](auto& e, auto addressList) {
         e ? promise.reject(e) : promise.resolve(std::move(addressList));
     });
