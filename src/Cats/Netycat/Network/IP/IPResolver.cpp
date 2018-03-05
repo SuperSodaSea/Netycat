@@ -61,23 +61,34 @@ std::vector<IPAddress> IPResolver::resolve(const String8& name) {
 std::vector<IPAddress> IPResolver::resolve(const String8& name, Corecat::ExceptionPtr& e) {
     
     // TODO: Use GetAddrInfoW on Windows
-    addrinfo hints;
-    addrinfo* result;
+#if defined(CORECAT_OS_WINDOWS)
+    using AddrInfoType = addrinfoW;
+#else
+    using AddrInfoType = addrinfo;
+#endif
+    AddrInfoType hints;
+    AddrInfoType* result;
     std::memset(&hints, 0, sizeof(hints));
     hints.ai_flags = AI_PASSIVE;
     hints.ai_family = AF_UNSPEC;
     int errcode;
+#if defined(CORECAT_OS_WINDOWS)
+    if((errcode = ::GetAddrInfoW(Corecat::WString(name).getData(), nullptr, &hints, &result))) {
+        
+        e = Corecat::IOException("::GetAddrInfoW failed");
+#else
     if((errcode = ::getaddrinfo(name.getData(), nullptr, &hints, &result))) {
         
         e = Corecat::IOException("::getaddrinfo failed");
+#endif
         return {};
         
     }
     std::size_t count = 0;
-    for(addrinfo* cur = result; cur != nullptr; cur = cur->ai_next) ++count;
+    for(auto cur = result; cur != nullptr; cur = cur->ai_next) ++count;
     std::vector<IPAddress> addressList;
     addressList.reserve(count);
-    for(addrinfo* cur = result; cur != nullptr; cur = cur->ai_next) {
+    for(auto cur = result; cur != nullptr; cur = cur->ai_next) {
         
         switch(cur->ai_family) {
         case AF_INET: {
@@ -98,10 +109,14 @@ std::vector<IPAddress> IPResolver::resolve(const String8& name, Corecat::Excepti
         }
         
     }
+#if defined(CORECAT_OS_WINDOWS)
+    ::FreeAddrInfoW(result);
+#else
     ::freeaddrinfo(result);
+#endif
     if(addressList.empty()) {
         
-        e = Corecat::IOException("No address available for address");
+        e = Corecat::IOException("No address available for name");
         return {};
         
     }

@@ -28,6 +28,8 @@
 #define CATS_NETYCAT_NETWORK_WIN32_WSA_HPP
 
 
+#include "Cats/Corecat/Win32/Windows.hpp"
+
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <mswsock.h>
