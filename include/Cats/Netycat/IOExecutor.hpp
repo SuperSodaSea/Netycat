@@ -34,6 +34,7 @@
 #include <functional>
 #include <queue>
 
+#include "Cats/Corecat/Concurrent/ThreadPoolExecutor.hpp"
 #include "Cats/Corecat/Concurrent/Promise.hpp"
 #include "Cats/Corecat/System/OS.hpp"
 #include "Cats/Corecat/Time/HighResolutionClock.hpp"
@@ -57,6 +58,7 @@ private:
     using ExceptionPtr = Corecat::ExceptionPtr;
     template <typename T = void>
     using Promise = Corecat::Promise<T>;
+    using ThreadPoolExecutor = Corecat::ThreadPoolExecutor;
     
 #if defined(NETYCAT_IOEXECUTOR_IOCP)
 public:
@@ -97,6 +99,8 @@ private:
     };
     std::priority_queue<Timer> timerQueue;
     
+    ThreadPoolExecutor threadPool;
+    
 public:
     
     IOExecutor();
@@ -111,6 +115,8 @@ public:
     
     void wait(double time, WaitCallback cb);
     Promise<> waitAsync(double time);
+    
+    ThreadPoolExecutor& getThreadPool() noexcept { return threadPool; }
     
     void run();
     

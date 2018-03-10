@@ -126,14 +126,14 @@ std::vector<IPAddress> IPResolver::resolve(const String8& name, Corecat::Excepti
 void IPResolver::resolve(const String8& name, ResolveCallback cb) {
     
     executor->beginWork();
-    std::thread([=, cb = std::move(cb)] {
+    executor->getThreadPool().execute([=, cb = std::move(cb)] {
         
         Corecat::ExceptionPtr e;
         auto addressList = resolve(name, e);
         executor->execute([cb = std::move(cb), e = std::move(e), addressList = std::move(addressList)] { cb(e, std::move(addressList)); });
         executor->endWork();
         
-    }).detach();
+    });
     
 }
 Corecat::Promise<std::vector<IPAddress>> IPResolver::resolveAsync(const String8& name) {
